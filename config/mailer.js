@@ -39,3 +39,21 @@ export const sendVerificationEmail = (email, token) => {
     };
     return transporter.sendMail(mailOptions);
 };
+
+
+export const sendDriverVerificationEmail = (email, token) => {
+    const verificationLink = `http://192.168.1.10:8000/api/driver/verify/${token}`;
+
+    const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: email,
+        subject: "Verify Your Account",
+        html: `
+            <h2><h2>Welcome to Our Platform!</h2>
+            <p>Click the button below to verify your account:</p>
+            <a href="${verificationLink}" style="background-color:blue; color:white; padding:10px; text-decoration:none; border-radius:5px;">Verify Email</a>
+            <p>If you didn't request this, please ignore this email.</p>
+        `,
+    };
+    return transporter.sendMail(mailOptions);
+};

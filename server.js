@@ -15,9 +15,11 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static("public"));
 
-import userRoutes from "./routes/auth.js";
+import userRoutes from "./routes/user.js";
+import driverRoutes from './routes/driver.js';
 
 app.use("/api/user", userRoutes);
+app.use("/api/driver",driverRoutes);
 
 app.get("/success", (req, res) => {
     res.render("success");
