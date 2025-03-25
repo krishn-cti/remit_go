@@ -2,259 +2,85 @@
 <html>
 
 <head>
-  <title>RemitGo</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/png" sizes="16x16" href="../../image/favicon.png" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <style type="text/css">
-    @media screen {
-      @font-face {
-        font-family: "Lato";
-        font-style: normal;
-        font-weight: 400;
-        src: local("Lato Regular"), local("Lato-Regular"),
-          url(https://fonts.gstatic.com/s/lato/v11/qIIYRU-oROkIk8vfvxw6QvesZW2xOQ-xsNqO47m55DA.woff) format("woff");
-      }
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="https://3.26.177.93:4000/fav_icon_marine.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
 
-      @font-face {
-        font-family: "Lato";
-        font-style: normal;
-        font-weight: 700;
-        src: local("Lato Bold"), local("Lato-Bold"),
-          url(https://fonts.gstatic.com/s/lato/v11/qdgUG4U09HnJwhYI-uK18wLUuEpTyoUstqEm5AMlJo4.woff) format("woff");
-      }
-
-      @font-face {
-        font-family: "Lato";
-        font-style: italic;
-        font-weight: 400;
-        src: local("Lato Italic"), local("Lato-Italic"),
-          url(https://fonts.gstatic.com/s/lato/v11/RYyZNoeFgb0l7W3Vu1aSWOvvDin1pK8aKteLpeZ5c0A.woff) format("woff");
-      }
-
-      @font-face {
-        font-family: "Lato";
-        font-style: italic;
-        font-weight: 700;
-        src: local("Lato Bold Italic"), local("Lato-BoldItalic"),
-          url(https://fonts.gstatic.com/s/lato/v11/HkF_qI1x_noxlxhrhMQYELO3LdcAZYWl9Si6vvxL-qU.woff) format("woff");
-      }
-    }
-
-    /* CLIENT-SPECIFIC STYLES */
-    body,
-    table,
-    td,
-    a {
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }
-
-    /* table,
-        td {
-            mso-table-lspace: 0pt;
-            mso-table-rspace: 0pt;
-        } */
-
-    img {
-      -ms-interpolation-mode: bicubic;
-    }
-
-    /* RESET STYLES */
-    img {
-      border: 0;
-      height: auto;
-      line-height: 50%;
-      outline: none;
-      text-decoration: none;
-    }
-
-    table {
-      border-collapse: collapse !important;
-    }
-
-    body {
-      height: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 100% !important;
-    }
-
-    /* iOS BLUE LINKS */
-    a[x-apple-data-detectors] {
-      color: inherit !important;
-      text-decoration: none !important;
-      font-size: inherit !important;
-      font-family: inherit !important;
-      font-weight: inherit !important;
-      line-height: inherit !important;
-    }
-
-    /* MOBILE STYLES */
-    @media screen and (max-width: 600px) {
-      h1 {
-        font-size: 32px !important;
-        line-height: 32px !important;
-      }
-    }
-
-    /* ANDROID CENTER FIX */
-    div[style*="margin: 16px 0;"] {
-      margin: 0 !important;
-    }
-  </style>
 </head>
+<style type="text/css">
+    * {
+        font-family: "Poppins", sans-serif;
+    }
+</style>
 
-<body style="
-      background-color: #f4f4f4;
-      margin: 0 !important;
-      padding: 0 !important;
-    ">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td bgcolor="#333" align="center">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 100px">
-          <tr>
-            <td align="center" valign="top" style="padding: 10px 10px 10px 10px">
-              <img src="http://192.168.29.93:5000/image/logo_1.png" alt="" title="" />
-            </td>
-          </tr>
-          <div class="ct_logo_text">
-            <h1 style="
-                  text-align: center;
-                  font-size: 28px;
-                  font-weight: 900;
-                  margin-bottom: 30px;
-                  color: #f5f5f5;
-                  font-family: sans-serif;
-                ">
-              RemitGo
-            </h1>
-          </div>
+<body  style="background-color: #f2f4f6;">
+    <div style="height: 100vh;overflow-y: auto;display: flex;">
+        <table
+            style="max-width: 600px;width:100%;border-radius: 10px; box-shadow: 4px 16px 25px rgb(0 0 0 / 12%); background-color: #fff;  border-collapse: collapse; margin: auto;height: auto; max-height: 700px; overflow-y: auto;">
+            <tr>
+                <td style=" padding: 30px; background-color:#121C35 ;">
+                    <h2 style="color: #fff; margin: 0px;">
+                        <img src="../public/images/logo.png"
+                            style="width:220px;object-fit: contain; margin-inline:auto; display: block;">
+                    </h2>
+                </td>
+            </tr>
+            <tr>
+                <td style=" padding-top: 50px;padding-inline:30px">
+                    <img src="../public/images/not-verify_img.jpg"
+                        style="width:120px; margin-inline:auto; display: block;">
+                  <h1 style="font-size: 20px; line-height: 24px;  font-weight: 600; text-align: center; text-decoration: none; color: #000000;">Not Verify!
+                  </h1>
+                  <p style="text-align: center;">
+                    We noticed that you haven't verified your account yet. To ensure you can access all the features and benefits of our service, please complete the verification process by following the link below:
+                  </p>
+
+                  <button type="submit" id="submitButton" style="background-color:#0BD2F1; border-color:#0BD2F1; display: inline-block;
+    display: inline-block;
+    padding: 21px 24px;
+    border-radius: 4px;
+    transition: all 0.2s ease-in;
+    position: relative;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    z-index: 1;
+    margin-top: 24px;
+    width: fit-content;
+    line-height: 0px;
+    border: 1px solid;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;" >
+          
+        Verify Account
+        </button>
+                    <div style="padding-top: 50px;">
+                        <h4 style="margin-bottom: 10px">Cheers,</h4>
+                        <p style="margin-top: 0px;">Remit Go Team </p>
+                    </div>
+                </td>
+            </tr>
+
+            <tr style="background-color: #121C35;">
+                <td style="padding:30px">
+                    <p style="margin-bottom:10px; margin-top: 0px; text-align:center; color:#fff">Need More Help?</p>
+                    <a href="mailto:yash@gmail.com"
+                        style="color:#fff; text-decoration: underline; text-align:center; display: block;">We are here
+                        to help you out</a>
+                </td>
+            </tr>
         </table>
-      </td>
-    </tr>
-    <tr>
-      <td bgcolor="#333" align="center" style="padding: 0px 10px 0px 10px">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px">
-          <tr>
-            <td bgcolor="#ffffff" align="center" valign="top" style="
-                  padding: 40px 20px 20px 20px;
-                  border-radius: 4px 4px 0px 0px;
-                  color: #111111;
-                  font-family: 'Lato', Helvetica, Arial, sans-serif;
-                  font-size: 48px;
-                  font-weight: 400;
-                  letter-spacing: 4px;
-                  line-height: 48px;
-                ">
-              <img src="http://192.168.29.76:8000/image/oops.png" width="250" height="100"
-                style="display: block; border: 0px" />
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td bgcolor="#f4f4f4" align="center" style="padding: 0px 10px 0px 10px">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px">
-          <tr>
-            <td bgcolor="#ffffff" align="left" style="
-                  padding: 0px 30px 40px 30px;
-                  color: #666666;
-                  font-family: 'Lato', Helvetica, Arial, sans-serif;
-                  font-size: 18px;
-                  font-weight: 400;
-                  line-height: 32px;
-                  text-align: center;
-                ">
-              <p style="margin: 0">
-                <!-- Something went wrong.<br />
-                                Please try again. -->
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td bgcolor="#ffffff" align="left">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td bgcolor="#ffffff" align="center" style="padding: 0px 30px 60px 30px">
-                    <table border="0" cellspacing="0" cellpadding="0">
-                      <tr>
-                        <td align="center" style="border-radius: 3px" bgcolor="#333">
-                          <!-- <a
-                              href="#"
-                              target="_blank"
-                              style="
-                                font-size: 20px;
-                                font-family: 'Lato', Helvetica, Arial,
-                                  sans-serif;
-                                color: #ffffff;
-                                text-decoration: none;
-                                color: #ffffff;
-                                text-decoration: none;
-                                padding: 15px 25px;
-                                border-radius: 2px;
-                                border: 1px solid #333;
-                                display: inline-block;
-                              "
-                              >RemitGo</a -->
-                          <!-- > -->
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td bgcolor="#ffffff" align="left" style="
-                  padding: 0px 30px 40px 30px;
-                  border-radius: 0px 0px 4px 4px;
-                  color: #666666;
-                  font-family: 'Lato', Helvetica, Arial, sans-serif;
-                  font-size: 18px;
-                  font-weight: 400;
-                  line-height: 25px;
-                ">
-              <p style="margin: 0">Cheers,<br />RemitGo Team</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td bgcolor="#f4f4f4" align="center" style="padding: 30px 10px 0px 10px">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px">
-          <tr>
-            <td bgcolor="#ffe5f4" align="center" style="
-                  padding: 30px 30px 30px 30px;
-                  border-radius: 4px 4px 4px 4px;
-                  color: #666666;
-                  font-family: 'Lato', Helvetica, Arial, sans-serif;
-                  font-size: 18px;
-                  font-weight: 400;
-                  line-height: 25px;
-                ">
-              <h2 style="
-                    font-size: 16px;
-                    font-weight: 400;
-                    color: #111111;
-                    margin: 0;
-                  ">
-                Need more help?
-              </h2>
-              <p style="margin: 0">
-                <a href="#" target="_blank" style="color: #e51893">We&rsquo;re here to help you out</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+    </div>
+    </div>
 </body>
 
 </html>
