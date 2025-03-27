@@ -3,17 +3,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// console.log({
-//     auth: {
-//         smtp_user: process.env.SMTP_USER,
-//         smtp_password: process.env.SMTP_PASSWORD,
-//     },
-// });
-
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secure: false, // True for 465, false for 587
+    secure: false, 
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD
@@ -23,8 +16,8 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-export const sendVerificationEmail = (email, token) => {
-    const verificationLink = `http://192.168.29.76:8000/api/user/verify/${token}`;
+export const sendVerificationEmail = (req,email, token) => {
+    const verificationLink = `${req.protocol}://${req.get('host')}/api/user/verify/${token}`;
 
     const mailOptions = {
         from: process.env.SMTP_USER,
@@ -41,8 +34,8 @@ export const sendVerificationEmail = (email, token) => {
 };
 
 
-export const sendDriverVerificationEmail = (email, token) => {
-    const verificationLink = `http://192.168.1.10:8000/api/driver/verify/${token}`;
+export const sendDriverVerificationEmail = (req,email, token) => {
+    const verificationLink = `${req.protocol}://${req.get('host')}/api/driver/verify/${token}`;
 
     const mailOptions = {
         from: process.env.SMTP_USER,

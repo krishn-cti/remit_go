@@ -19,11 +19,13 @@ import userRoutes from "./routes/user.js";
 import driverRoutes from './routes/driver.js';
 
 app.use("/api/user", userRoutes);
-app.use("/api/driver",driverRoutes);
+app.use("/api/driver" ,driverRoutes);
 
 app.get("/success", (req, res) => {
     res.render("success");
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
+console.log('PORT',PORT);
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

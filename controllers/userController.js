@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { sendVerificationEmail } from "../config/mailer.js";
 import { generateToken } from "../utils/auth.js";
+import Msg from "../utils/message.js"
 import {
     findUserByEmail,
     createUser,
@@ -45,17 +46,18 @@ export const signup = async (req, res) => {
     try {
         const existingUser = await findUserByEmail(email);
         if (existingUser) {
-            return res.status(400).json({ message: "Email already registered" });
+                return res.status(400).json({
+                    message: Msg.EMAIL_ALREADY_REGISTERED
+                })
         }
 
-        // Corrected hashing without salt rounds
         const hashedPassword = await argon2.hash(password);
 
         const token = jwt.sign({ email }, process.env.JWT_SECRET, {
             expiresIn: "1h",
         });
 
-        await sendVerificationEmail(email, token);
+        await sendVerificationEmail(req,email, token);
 
         const userData = {
             name,
@@ -69,11 +71,11 @@ export const signup = async (req, res) => {
         const response = await createUser(userData);
 
         if (response.affectedRows > 0) {
-            res.status(201).json({
-                message: `Signup successful! Please check your email (${email}) to verify your account.`,
+            res.status(201).json({      
+                message: `${Msg.SIGNUP_SUCCESSFULL} (${email}) to verify your account.`,
             });
         } else {
-            res.status(500).json({ message: "Signup failed. Please try again." });
+            res.status(500).json({ message:Msg.SIGNUP_FAILED});
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -109,30 +111,29 @@ export const verifyEmail = async (req, res) => {
             return res.sendFile(path.join(__dirname, "views", "notverify.html"));
         }
     } catch (error) {
-        res.status(500).json({ message: "Internal server error.", error: error.message });
+        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
     }
 };
 
 // Login API
 export const login = async (req, res) => {
 
-    const localIp = getLocalIp(); // Get the server's local IP address
+    const localIp = getLocalIp(); 
     const baseUrl = `http://${localIp}:${process.env.PORT}`;
 
     const { email, password } = req.body;
 
     try {
         const user = await findUserByEmail(email);
-        if (!user) return res.status(400).json({ message: "User not found" });
+        if (!user) return res.status(400).json({ message:Msg.USER_NOT_FOUND });
 
-        if (!user.email_verified_at) return res.status(403).json({ message: "Please verify your email first." });
+        if (!user.email_verified_at) return res.status(403).json({ message:Msg.VERIFY_EMAIL_FIRST});
 
-        // Compare password using argon2
         const isMatch = await argon2.verify(user.password, password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS });
 
         const token = generateToken(user);
-        res.json({ message: "Login successful!", token, user: { ...user, profile_image: `${baseUrl}/uploads/profile_images/${user.profile_image}` } });
+        res.json({ message: Msg.LOGIN_SUCCESSFULL, token, user: { ...user, profile_image: `${baseUrl}/uploads/profile_images/${user.profile_image}` } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -142,12 +143,12 @@ export const login = async (req, res) => {
 export const getProfile = async (req, res) => {
 
     try {
-        const localIp = getLocalIp(); // Get the server's local IP address
+        const localIp = getLocalIp(); 
         const baseUrl = `http://${localIp}:${process.env.PORT}`;
 
         const user = await getUserById(req.user.id);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
         }
         const { show_password, ...other } = user
 
@@ -167,7 +168,7 @@ export const updateProfile = async (req, res) => {
     try {
         const user = await getUserById(userId);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
         }
 
         let updateData = {
@@ -179,11 +180,10 @@ export const updateProfile = async (req, res) => {
         if (req.file) {
             const newImagePath = `${req.file.filename}`;
 
-            // Remove old image if it exists
             if (user.profile_image) {
                 const oldImagePath = path.join("public", user.profile_image);
                 if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath); // Delete old file
+                    fs.unlinkSync(oldImagePath); 
                 }
             }
 
@@ -194,10 +194,10 @@ export const updateProfile = async (req, res) => {
 
         if (response.affectedRows > 0) {
             return res.status(200).json({
-                message: "Profile updated successfully!",
+                message: Msg.PROFILE_UPDATED,
             });
         } else {
-            return res.status(400).json({ message: "No changes made to the profile." });
+            return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
         }
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -212,46 +212,42 @@ export const changePassword = async (req, res) => {
 
         if (!old_password || !new_password) {
             return res.status(400).json({
-                message: "Both old and new passwords are required",
+                message: Msg.PASSWORD_REQUIRED,
                 success: false,
             });
         }
 
-        // Fetch user's current password
         const user = await fetchUserPassword(userId);
         if (!user || !user.password) {
             return res.status(404).json({
-                message: "User not found",
+                message: Msg.USER_NOT_FOUND,
                 success: false,
             });
         }
 
-        // Verify old password
         const isMatch = await argon2.verify(user.password, old_password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Incorrect old password", success: false });
+            return res.status(400).json({ message: Msg.INCORRECT_OLD_PASSWORD, success: false });
         }
 
-        // Hash the new password
         const hashedNewPassword = await argon2.hash(new_password);
 
-        // Update password in database
         const response = await updatePassword(hashedNewPassword, new_password, userId);
 
         if (response?.affectedRows > 0) {
             return res.json({
-                message: "Password changed successfully",
+                message: Msg.PASSWORD_CHANGED,
                 success: true,
             });
         } else {
             return res.status(500).json({
-                message: "Unable to change password",
+                message: Msg.PASSWORD_CHANGE_FAILED,
                 success: false,
             });
         }
     } catch (error) {
         console.error("Error changing password:", error);
-        res.status(500).json({ message: "Internal server error", success: false });
+        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, success: false });
     }
 };
 
@@ -260,7 +256,7 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
         const user = await findUserByEmail(email);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
 
         const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
         const resetLink = `http://${localIp}:${process.env.PORT}/api/user/reset-password/${resetToken}`;
@@ -287,7 +283,7 @@ export const forgotPassword = async (req, res) => {
             html: emailHtml,
         });
 
-        res.json({ message: "A recovery email has been sent to your email address to reset your password" });
+        res.json({ message: Msg.RECOVERY_EMAIL_SENT });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -306,8 +302,8 @@ export const resetPassword = async (req, res) => {
         const hashedNewPassword = await argon2.hash(password);
 
         await updatePassword(hashedNewPassword, password, decoded.id);
-        return res.json({ success: true, message: "Password updated successfully!", redirect: "/success" });
+        return res.json({ success: true, message: Msg.PROFILE_UPDATED, redirect: "/success" });
     } catch (error) {
-        res.status(400).json({ message: "Internal servber error " + error.message });
+        res.status(400).json({ message: Msg.INTERNAL_SERVER_ERROR + error.message });
     }
 };

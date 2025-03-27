@@ -71,8 +71,8 @@ export const fetchUserPassword = (id) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT password FROM drivers WHERE id = ?", [id], (err, result) => {
             if (err) return reject(err);
-            if (result.length === 0) return resolve(null); // Handle case where user is not found
-            resolve(result[0]); // Return user password object
+            if (result.length === 0) return resolve(null); 
+            resolve(result[0]); 
         });
     });
 };
@@ -84,7 +84,7 @@ export const updatePassword = (newPassword, show_password, id) => {
             [newPassword, show_password, id],
             (err, result) => {
                 if (err) return reject(err);
-                resolve(result); // Return full result, not just result[0]
+                resolve(result); 
             }
         );
     });
