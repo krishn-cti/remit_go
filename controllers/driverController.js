@@ -292,7 +292,7 @@ export const forgotPassword = async (req, res) => {
 
 export const loadResetPasswordForm = async (req, res) => {
     const { token } = req.params;
-    const resetLink = `http://${localIp}:${process.env.PORT}/api/user/`
+    const resetLink = `http://${localIp}:${process.env.PORT}/api/driver/`
     res.render("reset-password", { token, resetLink });
 };
 
