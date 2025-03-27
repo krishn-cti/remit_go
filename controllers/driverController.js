@@ -206,8 +206,6 @@ export const updateProfile = async (req, res) => {
 // Change Password API
 export const changePassword = async (req, res) => {
     try {
-        console.log('jhgfkjyfg,jh');
-        
         const { old_password, new_password } = req.body;
         const userId = req.user.id;
 
