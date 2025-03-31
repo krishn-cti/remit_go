@@ -10,7 +10,7 @@ router.get("/verify/:token", verifyEmail);
 router.post("/login", login);
 router.get("/get-profile", auth, getProfile);
 // router.post("/update-profile", auth, upload.single("profile_image"), updateProfile);
-router.put("/update-profile", auth, upload.single("profile_image"), updateProfile);
+router.put("/update-profile", auth, upload, updateProfile);
 router.put("/change-password", auth, changePassword);
 router.post("/forgot-password", forgotPassword);
 router.get("/reset-password/:token", loadResetPasswordForm)

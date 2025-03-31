@@ -42,7 +42,7 @@ let baseUrl = `http://${localIp}:${process.env.PORT}`;
 
 // Signup API
 export const signup = async (req, res) => {
-    const { name, email, password, phone_number } = req.body;
+    const { name, email, password, phone_number, dl_number, rc_number } = req.body;
 
     try {
         const existingUser = await findUserByEmail(email);
@@ -56,12 +56,21 @@ export const signup = async (req, res) => {
             expiresIn: "1h",
         });
 
-        await sendDriverVerificationEmail(req,email, token);
+        // Access files correctly using req.files
+        const dlImage = req.files?.dl_image ? req.files.dl_image[0].filename : "";
+        const rcImage = req.files?.rc_image ? req.files.rc_image[0].filename : "";
+
+
+        await sendDriverVerificationEmail(req, email, token);
 
         const userData = {
             name,
             email,
             phone_number,
+            dl_number,
+            rc_number,
+            dl_image: dlImage,
+            rc_image: rcImage,
             password: hashedPassword,
             show_password: password,
             act_token: token,
@@ -117,7 +126,7 @@ export const verifyEmail = async (req, res) => {
 // Login API
 export const login = async (req, res) => {
 
-    const localIp = getLocalIp(); 
+    const localIp = getLocalIp();
     const baseUrl = `http://${localIp}:${process.env.PORT}`;
 
     const { email, password } = req.body;
@@ -129,7 +138,7 @@ export const login = async (req, res) => {
         if (!user.email_verified_at) return res.status(403).json({ message: Msg.VERIFY_EMAIL_FIRST });
 
         const isMatch = await argon2.verify(user.password, password);
-        if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS});
+        if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS });
 
         const token = generateToken(user);
         res.json({ message: Msg.LOGIN_SUCCESSFULL, token, user: { ...user, profile_image: `${baseUrl}/uploads/profile_images/${user.profile_image}` } });
@@ -142,7 +151,7 @@ export const login = async (req, res) => {
 export const getProfile = async (req, res) => {
 
     try {
-        const localIp = getLocalIp(); 
+        const localIp = getLocalIp();
         const baseUrl = `http://${localIp}:${process.env.PORT}`;
 
         const user = await getUserById(req.user.id);
@@ -151,17 +160,69 @@ export const getProfile = async (req, res) => {
         }
         const { show_password, ...other } = user
 
-
-
-        res.json({ success: true, user: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
+        res.json({ 
+            success: true, 
+            user: { 
+                ...other, 
+                profile_image: other.profile_image ? `${baseUrl}/uploads/profile_images/${other.profile_image}` : null,
+                dl_image: other.dl_image ? `${baseUrl}/uploads/dl_images/${other.dl_image}` : null,
+                rc_image: other.rc_image ? `${baseUrl}/uploads/rc_images/${other.rc_image}` : null
+            } 
+        });        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
 // Update Profile API
+// export const updateProfile = async (req, res) => {
+//     const { name, phone_number, dl_number, rc_number } = req.body;
+//     const userId = req.user.id;
+
+//     try {
+//         const user = await getUserById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+//         }
+
+//         let updateData = {
+//             name: name || user.name,
+//             phone_number: phone_number || user.phone_number,
+//             dl_number: dl_number || user.dl_number,
+//             rc_number: rc_number || user.rc_number,
+//             profile_image: user.profile_image,
+//             dl_image: user.dl_image,
+//             rc_image: user.rc_image,
+//         };
+
+//         if (req.file) {
+//             const newImagePath = `${req.file.filename}`;
+
+//             if (user.profile_image) {
+//                 const oldImagePath = path.join("public", user.profile_image);
+//                 if (fs.existsSync(oldImagePath)) {
+//                     fs.unlinkSync(oldImagePath);
+//                 }
+//             }
+//             updateData.profile_image = newImagePath;
+//         }
+
+//         const response = await updateUserProfile(userId, updateData);
+
+//         if (response.affectedRows > 0) {
+//             return res.status(200).json({
+//                 message: Msg.PROFILE_UPDATED,
+//             });
+//         } else {
+//             return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
+//         }
+//     } catch (error) {
+//         return res.status(500).json({ error: error.message });
+//     }
+// };
+
 export const updateProfile = async (req, res) => {
-    const { name, phone_number } = req.body;
+    const { name, phone_number, dl_number, rc_number } = req.body;
     const userId = req.user.id;
 
     try {
@@ -173,20 +234,47 @@ export const updateProfile = async (req, res) => {
         let updateData = {
             name: name || user.name,
             phone_number: phone_number || user.phone_number,
+            dl_number: dl_number || user.dl_number,
+            rc_number: rc_number || user.rc_number,
             profile_image: user.profile_image,
+            dl_image: user.dl_image,
+            rc_image: user.rc_image,
         };
 
-        if (req.file) {
-            const newImagePath = `${req.file.filename}`;
-
+        // Handling profile_image upload
+        if (req.files?.profile_image) {
+            const newProfileImagePath = `${req.files.profile_image[0].filename}`;
             if (user.profile_image) {
-                const oldImagePath = path.join("public", user.profile_image);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath); 
+                const oldProfileImagePath = path.join("public", user.profile_image);
+                if (fs.existsSync(oldProfileImagePath)) {
+                    fs.unlinkSync(oldProfileImagePath);
                 }
             }
+            updateData.profile_image = newProfileImagePath;
+        }
 
-            updateData.profile_image = newImagePath;
+        // Handling dl_image upload
+        if (req.files?.dl_image) {
+            const newDlImagePath = `${req.files.dl_image[0].filename}`;
+            if (user.dl_image) {
+                const oldDlImagePath = path.join("public", user.dl_image);
+                if (fs.existsSync(oldDlImagePath)) {
+                    fs.unlinkSync(oldDlImagePath);
+                }
+            }
+            updateData.dl_image = newDlImagePath;
+        }
+
+        // Handling rc_image upload
+        if (req.files?.rc_image) {
+            const newRcImagePath = `${req.files.rc_image[0].filename}`;
+            if (user.rc_image) {
+                const oldRcImagePath = path.join("public", user.rc_image);
+                if (fs.existsSync(oldRcImagePath)) {
+                    fs.unlinkSync(oldRcImagePath);
+                }
+            }
+            updateData.rc_image = newRcImagePath;
         }
 
         const response = await updateUserProfile(userId, updateData);
@@ -196,12 +284,12 @@ export const updateProfile = async (req, res) => {
                 message: Msg.PROFILE_UPDATED,
             });
         } else {
-            return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES});
+            return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
         }
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
-};
+}
 
 // Change Password API
 export const changePassword = async (req, res) => {

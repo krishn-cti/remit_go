@@ -85,7 +85,7 @@ export const signup = async (req, res) => {
 // Verify User
 export const verifyEmail = async (req, res) => {
     const { token } = req.params;
-
+console.log(req.params);
     try {
         const user = await findUserByActToken(token);
 
