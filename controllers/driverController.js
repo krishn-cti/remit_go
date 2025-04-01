@@ -345,7 +345,7 @@ export const forgotPassword = async (req, res) => {
 
         await transporter.sendMail({
             from: '"No Reply" <no-reply@gmail.com>',
-            to: user.email,
+            to: driver.email,
             subject: "Password Reset Request",
             html: emailHtml,
         });
