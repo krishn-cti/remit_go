@@ -8,20 +8,20 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { sendDriverVerificationEmail } from "../config/mailer.js";
-import { generateToken } from "../utils/driverauth.js";
+import { generateToken } from "../utils/driverAuth.js";
 import Msg from "../utils/message.js"
 
 import {
-    findUserByEmail,
-    createUser,
-    findUserByActToken,
-    verifyUserEmail,
-    getUserById,
-    updateUserProfile,
-    fetchUserPassword,
+    findDriverByEmail,
+    createDriver,
+    findDriverByActToken,
+    verifyDriverEmail,
+    getDriverById,
+    updateDriverProfile,
+    fetchDriverPassword,
     updatePassword,
     createChangeRequest,
-    findUserByUuid
+    findDriverByUuid
 } from "../models/driverModel.js";
 
 dotenv.config();
@@ -51,8 +51,8 @@ const generateUniqueId = async () => {
         id = Array.from({ length: 10 }, () => characters[Math.floor(Math.random() * characters.length)]).join("");
 
         // Check if ID already exists in the database
-        const existingUser = await findUserByUuid(id);
-        if (!existingUser) {
+        const existingDriver = await findDriverByUuid(id);
+        if (!existingDriver) {
             isUnique = true;
         }
     }
@@ -62,12 +62,12 @@ const generateUniqueId = async () => {
 
 // Signup API
 export const signup = async (req, res) => {
-    const { name, email, password, phone_number, dl_number, rc_number } = req.body;
+    const { name, email, password, phone_number, country_code, dl_number, rc_number } = req.body;
 
     try {
-        const existingUser = await findUserByEmail(email);
-        if (existingUser) {
-            return res.status(400).json({ message: Msg.EMAIL_ALREADY_REGISTERED });
+        const existingDriver = await findDriverByEmail(email);
+        if (existingDriver) {
+            return res.status(400).json({ success: false, message: Msg.EMAIL_ALREADY_REGISTERED });
         }
 
         const hashedPassword = await argon2.hash(password);
@@ -79,10 +79,11 @@ export const signup = async (req, res) => {
 
         await sendDriverVerificationEmail(req, email, token);
 
-        const userData = {
+        const driverData = {
             driver_uuid: await generateUniqueId(), // Ensures unique 10-character ID
             name,
             email,
+            country_code,
             phone_number,
             dl_number,
             rc_number,
@@ -93,38 +94,39 @@ export const signup = async (req, res) => {
             act_token: token,
         };
 
-        const response = await createUser(userData);
+        const response = await createDriver(driverData);
 
         if (response.affectedRows > 0) {
             res.status(201).json({
+                success: true,
                 message: `${Msg.SIGNUP_SUCCESSFULL} (${email}) to verify your account.`,
             });
         } else {
-            res.status(500).json({ message: Msg.SIGNUP_FAILED });
+            res.status(500).json({ success: false, message: Msg.SIGNUP_FAILED });
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
-// Verify User
+// Verify Driver
 export const verifyEmail = async (req, res) => {
     const { token } = req.params;
 
     try {
-        const user = await findUserByActToken(token);
+        const driver = await findDriverByActToken(token);
 
-        if (user?.act_token != token) {
+        if (driver?.act_token != token) {
             return res.sendFile(path.join(__dirname, "views", "notverify.html"));
         }
 
         const data = {
             act_token: null,
             email_verified_at: new Date(),
-            id: user.id,
+            id: driver.id,
         };
 
-        const result = await verifyUserEmail(
+        const result = await verifyDriverEmail(
             data?.act_token,
             data?.email_verified_at,
             data?.id
@@ -136,31 +138,39 @@ export const verifyEmail = async (req, res) => {
             return res.sendFile(path.join(__dirname, "views", "notverify.html"));
         }
     } catch (error) {
-        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
+        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
     }
 };
 
 // Login API
 export const login = async (req, res) => {
-
-    const localIp = getLocalIp();
-    const baseUrl = `http://${localIp}:${process.env.PORT}`;
-
     const { email, password } = req.body;
 
     try {
-        const user = await findUserByEmail(email);
-        if (!user) return res.status(400).json({ message: Msg.USER_NOT_FOUND });
+        const driver = await findDriverByEmail(email);
+        if (!driver) return res.status(400).json({ success: false, message: Msg.USER_NOT_FOUND });
 
-        if (!user.email_verified_at) return res.status(403).json({ message: Msg.VERIFY_EMAIL_FIRST });
+        if (!driver.email_verified_at) return res.status(403).json({ success: false, message: Msg.VERIFY_EMAIL_FIRST });
 
-        const isMatch = await argon2.verify(user.password, password);
-        if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS });
+        const isMatch = await argon2.verify(driver.password, password);
+        if (!isMatch) return res.status(400).json({ success: false, message: Msg.INVALID_CREDENTIALS });
 
-        const token = generateToken(user);
-        res.json({ message: Msg.LOGIN_SUCCESSFULL, token, user: { ...user, profile_image: `${baseUrl}/uploads/profile_images/${user.profile_image}` } });
+        const token = generateToken(driver);
+        const { show_password, ...other } = driver
+
+        res.json({
+            success: true,
+            message: Msg.LOGIN_SUCCESSFULL,
+            token,
+            user: {
+                ...other,
+                profile_image: other.profile_image ? `${baseUrl}/uploads/profile_images/${other.profile_image}` : null,
+                dl_image: other.dl_image ? `${baseUrl}/uploads/dl_images/${other.dl_image}` : null,
+                rc_image: other.rc_image ? `${baseUrl}/uploads/rc_images/${other.rc_image}` : null
+            }
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -168,14 +178,11 @@ export const login = async (req, res) => {
 export const getProfile = async (req, res) => {
 
     try {
-        const localIp = getLocalIp();
-        const baseUrl = `http://${localIp}:${process.env.PORT}`;
-
-        const user = await getUserById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        const driver = await getDriverById(req.user.id);
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
-        const { show_password, ...other } = user
+        const { show_password, ...other } = driver
 
         res.json({
             success: true,
@@ -187,36 +194,37 @@ export const getProfile = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 // Update Profile API
 export const updateProfile = async (req, res) => {
-    const { name, phone_number, dl_number, rc_number } = req.body;
-    const userId = req.user.id;
+    const { name, phone_number, dl_number, rc_number, country_code } = req.body;
+    const driverId = req.user.id;
 
     try {
-        const user = await getUserById(userId);
-        if (!user) {
-            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        const driver = await getDriverById(driverId);
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
 
         let updateData = {
-            name: name || user.name,
-            phone_number: phone_number || user.phone_number,
-            dl_number: dl_number || user.dl_number,
-            rc_number: rc_number || user.rc_number,
-            profile_image: user.profile_image,
-            dl_image: user.dl_image,
-            rc_image: user.rc_image,
+            name: name || driver.name,
+            country_code: country_code || driver.country_code,
+            phone_number: phone_number || driver.phone_number,
+            dl_number: dl_number || driver.dl_number,
+            rc_number: rc_number || driver.rc_number,
+            profile_image: driver.profile_image,
+            dl_image: driver.dl_image,
+            rc_image: driver.rc_image,
         };
 
         // Handling profile_image upload
         if (req.files?.profile_image) {
             const newProfileImagePath = `${req.files.profile_image[0].filename}`;
-            if (user.profile_image) {
-                const oldProfileImagePath = path.join("public", user.profile_image);
+            if (driver.profile_image) {
+                const oldProfileImagePath = path.join("public", driver.profile_image);
                 if (fs.existsSync(oldProfileImagePath)) {
                     fs.unlinkSync(oldProfileImagePath);
                 }
@@ -227,8 +235,8 @@ export const updateProfile = async (req, res) => {
         // Handling dl_image upload
         if (req.files?.dl_image) {
             const newDlImagePath = `${req.files.dl_image[0].filename}`;
-            if (user.dl_image) {
-                const oldDlImagePath = path.join("public", user.dl_image);
+            if (driver.dl_image) {
+                const oldDlImagePath = path.join("public", driver.dl_image);
                 if (fs.existsSync(oldDlImagePath)) {
                     fs.unlinkSync(oldDlImagePath);
                 }
@@ -239,8 +247,8 @@ export const updateProfile = async (req, res) => {
         // Handling rc_image upload
         if (req.files?.rc_image) {
             const newRcImagePath = `${req.files.rc_image[0].filename}`;
-            if (user.rc_image) {
-                const oldRcImagePath = path.join("public", user.rc_image);
+            if (driver.rc_image) {
+                const oldRcImagePath = path.join("public", driver.rc_image);
                 if (fs.existsSync(oldRcImagePath)) {
                     fs.unlinkSync(oldRcImagePath);
                 }
@@ -248,17 +256,18 @@ export const updateProfile = async (req, res) => {
             updateData.rc_image = newRcImagePath;
         }
 
-        const response = await updateUserProfile(userId, updateData);
+        const response = await updateDriverProfile(driverId, updateData);
 
         if (response.affectedRows > 0) {
             return res.status(200).json({
+                success: true,
                 message: Msg.PROFILE_UPDATED,
             });
         } else {
-            return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
+            return res.status(400).json({ success: false, message: Msg.NO_PROFILE_CHANGES });
         }
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
 
@@ -266,46 +275,46 @@ export const updateProfile = async (req, res) => {
 export const changePassword = async (req, res) => {
     try {
         const { old_password, new_password } = req.body;
-        const userId = req.user.id;
+        const driverId = req.user.id;
 
         if (!old_password || !new_password) {
             return res.status(400).json({
+                success: false,
                 message: Msg.PASSWORD_REQUIRED,
-                success: false,
             });
         }
 
-        const user = await fetchUserPassword(userId);
-        if (!user || !user.password) {
+        const driver = await fetchDriverPassword(driverId);
+        if (!driver || !driver.password) {
             return res.status(404).json({
-                message: Msg.USER_NOT_FOUND,
                 success: false,
+                message: Msg.USER_NOT_FOUND,
             });
         }
 
-        const isMatch = await argon2.verify(user.password, old_password);
+        const isMatch = await argon2.verify(driver.password, old_password);
         if (!isMatch) {
-            return res.status(400).json({ message: Msg.INCORRECT_OLD_PASSWORD, success: false });
+            return res.status(400).json({ success: false, message: Msg.INCORRECT_OLD_PASSWORD });
         }
 
         const hashedNewPassword = await argon2.hash(new_password);
 
-        const response = await updatePassword(hashedNewPassword, new_password, userId);
+        const response = await updatePassword(hashedNewPassword, new_password, driverId);
 
         if (response?.affectedRows > 0) {
             return res.json({
-                message: Msg.PASSWORD_CHANGED,
                 success: true,
+                message: Msg.PASSWORD_CHANGED,
             });
         } else {
             return res.status(500).json({
-                message: Msg.PASSWORD_CHANGE_FAILED,
                 success: false,
+                message: Msg.PASSWORD_CHANGE_FAILED,
             });
         }
     } catch (error) {
         console.error("Error changing password:", error);
-        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, success: false });
+        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -313,11 +322,11 @@ export const changePassword = async (req, res) => {
 export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
-        const user = await findUserByEmail(email);
-        if (!user) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        const driver = await findDriverByEmail(email);
+        if (!driver) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
 
-        const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
-        const resetLink = `http://${localIp}:${process.env.PORT}/api/driver/reset-password/${resetToken}`;
+        const resetToken = jwt.sign({ id: driver.id }, process.env.JWT_SECRET);
+        const resetLink = `${baseUrl}/api/driver/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -341,15 +350,15 @@ export const forgotPassword = async (req, res) => {
             html: emailHtml,
         });
 
-        res.json({ message: Msg.RECOVERY_EMAIL_SENT });
+        res.status(200).json({ success: true, message: Msg.RECOVERY_EMAIL_SENT });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 export const loadResetPasswordForm = async (req, res) => {
     const { token } = req.params;
-    const resetLink = `http://${localIp}:${process.env.PORT}/api/driver/`
+    const resetLink = `${baseUrl}/api/driver/`
     res.render("reset-password", { token, resetLink });
 };
 
@@ -362,7 +371,7 @@ export const resetPassword = async (req, res) => {
         await updatePassword(hashedNewPassword, password, decoded.id);
         return res.json({ success: true, message: Msg.PASSWORD_UPDATED, redirect: "/success" });
     } catch (error) {
-        res.status(400).json({ message: Msg.INTERNAL_SERVER_ERROR + error.message });
+        res.status(400).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR + error.message });
     }
 };
 
@@ -370,14 +379,14 @@ export const changeDocumentRequest = async (req, res) => {
     const { document_type, reason } = req.body;
 
     try {
-        // Get logged-in user
-        const user = await getUserById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        // Get logged-in driver
+        const driver = await getDriverById(req.user.id);
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
 
         const documentRequestData = {
-            driver_id: user.id,
+            driver_id: driver.id,
             document_type,
             reason
         };
@@ -385,13 +394,13 @@ export const changeDocumentRequest = async (req, res) => {
         const response = await createChangeRequest(documentRequestData);
 
         if (response.affectedRows > 0) {
-            res.status(201).json({ message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_SUCCESSFULL });
+            res.status(201).json({ success: true, message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_SUCCESSFULL });
         } else {
-            res.status(500).json({ message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_FAILED });
+            res.status(500).json({ success: false, message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_FAILED });
         }
 
     } catch (error) {
         console.error("Error in change document request:", error);
-        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
+        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
     }
 }

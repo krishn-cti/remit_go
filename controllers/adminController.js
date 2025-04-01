@@ -1,5 +1,5 @@
 
-import { findAdminByEmail, getAdmin, updatePassword, updateAdminProfile, fetchUserPassword } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword } from "../models/adminModel.js";
 import { generateToken } from "../utils/adminAuth.js";
 import argon2 from 'argon2';
 import dotenv from 'dotenv';
@@ -32,46 +32,37 @@ let baseUrl = `http://${localIp}:${process.env.PORT}`;
 
 // Login API
 export const login = async (req, res) => {
-
-    const localIp = getLocalIp();
-    const baseUrl = `http://${localIp}:${process.env.PORT}`;
-
     const { email, password } = req.body;
 
     try {
         const admin = await findAdminByEmail(email);
 
-        if (!admin) return res.status(400).json({ message: Msg.USER_NOT_FOUND });
+        if (!admin) return res.status(400).json({ success: false, message: Msg.USER_NOT_FOUND });
 
-        if (!admin.email_verified_at) return res.status(403).json({ message: Msg.VERIFY_EMAIL_FIRST });
+        if (!admin.email_verified_at) return res.status(403).json({ success: false, message: Msg.VERIFY_EMAIL_FIRST });
 
         const isMatch = await argon2.verify(admin.password, password);
-        if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS });
+        if (!isMatch) return res.status(400).json({ success: false, message: Msg.INVALID_CREDENTIALS });
 
         const token = generateToken(admin);
-        res.json({ message: Msg.LOGIN_SUCCESSFULL, token, admin: { ...admin, profile_image: `${baseUrl}/uploads/profile_images/${admin.profile_image}` } });
+        res.json({ success: true, message: Msg.LOGIN_SUCCESSFULL, token, admin: { ...admin, profile_image: `${baseUrl}/uploads/profile_images/${admin.profile_image}` } });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 // Get Profile API
 export const getAdminProfile = async (req, res) => {
-    console.log('object', req);
-
     try {
-        const localIp = getLocalIp();
-        const baseUrl = `http://${localIp}:${process.env.PORT}`;
-
-        const admin = await getAdmin(req.user.id);
+        const admin = await getAdminById(req.user.id);
         if (!admin) {
-            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
         const { show_password, ...other } = admin
 
-        res.json({ success: true, admin: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
+        res.status(200).json({ success: true, admin: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -81,12 +72,12 @@ export const updateProfile = async (req, res) => {
     const adminId = req.user.id;
 
     try {
-        const admin = await getAdmin(adminId);
+        const admin = await getAdminById(adminId);
         if (!admin) {
-            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
 
-        let updateData = {
+        let adminData = {
             name: name || admin.name,
             phone_number: phone_number || admin.phone_number,
             profile_image: admin.profile_image,
@@ -102,20 +93,21 @@ export const updateProfile = async (req, res) => {
                 }
             }
 
-            updateData.profile_image = newImagePath;
+            adminData.profile_image = newImagePath;
         }
 
-        const response = await updateAdminProfile(adminId, updateData);
+        const response = await updateAdminProfile(adminId, adminData);
 
         if (response.affectedRows > 0) {
             return res.status(200).json({
+                success: true,
                 message: Msg.PROFILE_UPDATED,
             });
         } else {
-            return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
+            return res.status(400).json({ success: false, message: Msg.NO_PROFILE_CHANGES });
         }
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -127,22 +119,22 @@ export const changePassword = async (req, res) => {
 
         if (!old_password || !new_password) {
             return res.status(400).json({
-                message: Msg.PASSWORD_REQUIRED,
                 success: false,
+                message: Msg.PASSWORD_REQUIRED,
             });
         }
 
-        const admin = await fetchUserPassword(adminId);
+        const admin = await fetchAminPassword(adminId);
         if (!admin || !admin.password) {
             return res.status(404).json({
-                message: Msg.USER_NOT_FOUND,
                 success: false,
+                message: Msg.USER_NOT_FOUND,
             });
         }
 
         const isMatch = await argon2.verify(admin.password, old_password);
         if (!isMatch) {
-            return res.status(400).json({ message: Msg.INCORRECT_OLD_PASSWORD, success: false });
+            return res.status(400).json({ success: false, message: Msg.INCORRECT_OLD_PASSWORD });
         }
 
         const hashedNewPassword = await argon2.hash(new_password);
@@ -151,18 +143,18 @@ export const changePassword = async (req, res) => {
 
         if (response?.affectedRows > 0) {
             return res.json({
-                message: Msg.PASSWORD_CHANGED,
                 success: true,
+                message: Msg.PASSWORD_CHANGED,
             });
         } else {
             return res.status(500).json({
-                message: Msg.PASSWORD_CHANGE_FAILED,
                 success: false,
+                message: Msg.PASSWORD_CHANGE_FAILED,
             });
         }
     } catch (error) {
         console.error("Error changing password:", error);
-        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, success: false });
+        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -172,12 +164,11 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
         const admin = await findAdminByEmail(email);
-        //console.log('yutuytututuyt', user);
 
-        if (!admin) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        if (!admin) return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
 
         const resetToken = jwt.sign({ id: admin.id }, process.env.ADMIN_JWT_SECRET);
-        const resetLink = `http://${localIp}:${process.env.PORT}/api/admin/reset-password/${resetToken}`;
+        const resetLink = `${baseUrl}/api/admin/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -201,15 +192,15 @@ export const forgotPassword = async (req, res) => {
             html: emailHtml,
         });
 
-        res.json({ message: Msg.RECOVERY_EMAIL_SENT });
+        res.status(200).json({ success: true, message: Msg.RECOVERY_EMAIL_SENT });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 export const loadResetPasswordForm = async (req, res) => {
     const { token } = req.params;
-    const resetLink = `http://${localIp}:${process.env.PORT}/api/admin/`
+    const resetLink = `${baseUrl}/api/admin/`
     res.render("reset-password", { token, resetLink });
 };
 
@@ -222,6 +213,6 @@ export const resetPassword = async (req, res) => {
         await updatePassword(hashedNewPassword, password, decoded.id);
         return res.json({ success: true, message: Msg.PROFILE_UPDATED, redirect: "/success" });
     } catch (error) {
-        res.status(400).json({ message: Msg.INTERNAL_SERVER_ERROR + error.message });
+        res.status(400).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR + error.message });
     }
 };

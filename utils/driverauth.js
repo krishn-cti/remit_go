@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import Msg from "../utils/message.js"
+import Msg from "./message.js"
 
 
 export const generateToken = (user) => {

@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 
-export const findUserByEmail = (email) => {
+export const findDriverByEmail = (email) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM drivers WHERE email = ?", [email], (err, result) => {
             if (err) return reject(err);
@@ -10,16 +10,16 @@ export const findUserByEmail = (email) => {
     });
 };
 
-export const createUser = (userData) => {
+export const createDriver = (driverData) => {
     return new Promise((resolve, reject) => {
-        db.query("INSERT INTO drivers SET ?", userData, (err, result) => {
+        db.query("INSERT INTO drivers SET ?", driverData, (err, result) => {
             if (err) reject(err);
             resolve(result);
         });
     });
 };
 
-export const findUserByUuid = async (uuid) => {
+export const findDriverByUuid = async (uuid) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM drivers WHERE driver_uuid = ?", [uuid], (err, result) => {
             if (err) reject(err);
@@ -28,7 +28,7 @@ export const findUserByUuid = async (uuid) => {
     });
 };
 
-export const findUserByActToken = (act_token) => {
+export const findDriverByActToken = (act_token) => {
     return new Promise((resolve, reject) => {
         db.query(
             "SELECT * FROM drivers WHERE act_token = ?",
@@ -42,7 +42,7 @@ export const findUserByActToken = (act_token) => {
     });
 };
 
-export const verifyUserEmail = (act_token, email_verified_at, id) => {
+export const verifyDriverEmail = (act_token, email_verified_at, id) => {
     return new Promise((resolve, reject) => {
         db.query(
             "Update drivers set act_token = ?, email_verified_at = ? where id = ? ",
@@ -55,7 +55,7 @@ export const verifyUserEmail = (act_token, email_verified_at, id) => {
     });
 };
 
-export const getUserById = (id) => {
+export const getDriverById = (id) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM drivers WHERE id = ?", [id], (err, result) => {
             if (err) reject(err);
@@ -64,9 +64,9 @@ export const getUserById = (id) => {
     });
 };
 
-export const updateUserProfile = async (id, userData) => {
-    const fields = Object.keys(userData).map(key => `${key} = ?`).join(", ");
-    const values = [...Object.values(userData), id];
+export const updateDriverProfile = async (id, driverData) => {
+    const fields = Object.keys(driverData).map(key => `${key} = ?`).join(", ");
+    const values = [...Object.values(driverData), id];
 
     try {
         const result = await db.promise().execute(`UPDATE drivers SET ${fields} WHERE id = ?`, values);
@@ -76,7 +76,7 @@ export const updateUserProfile = async (id, userData) => {
     }
 };
 
-export const fetchUserPassword = (id) => {
+export const fetchDriverPassword = (id) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT password FROM drivers WHERE id = ?", [id], (err, result) => {
             if (err) return reject(err);

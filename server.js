@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 dotenv.config();
@@ -8,7 +9,10 @@ dotenv.config();
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 app.use(bodyParser.json());
+app.use(express.urlencoded());
+app.use(cors());
 app.set("view engine", "ejs");
 
 // Set the views directory
@@ -28,6 +32,5 @@ app.get("/success", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8000;
-console.log('PORT',PORT);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

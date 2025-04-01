@@ -4,7 +4,7 @@ import Msg from "../utils/message.js"
 
 dotenv.config();
 
-export const auth = async(req, res, next) => {
+export const driverAuth = async(req, res, next) => {
     const token = req.header("Authorization");
     if (!token) return res.status(403).json({ error: Msg.ACCESS_DENIED });
 
