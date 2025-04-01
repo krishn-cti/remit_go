@@ -19,6 +19,15 @@ export const createUser = (userData) => {
     });
 };
 
+export const findUserByUuid = async (uuid) => {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT * FROM drivers WHERE driver_uuid = ?", [uuid], (err, result) => {
+            if (err) reject(err);
+            resolve(result[0]);
+        });
+    });
+};
+
 export const findUserByActToken = (act_token) => {
     return new Promise((resolve, reject) => {
         db.query(
@@ -87,5 +96,14 @@ export const updatePassword = (newPassword, show_password, id) => {
                 resolve(result); 
             }
         );
+    });
+};
+
+export const createChangeRequest = (driverRequestData) => {
+    return new Promise((resolve, reject) => {
+        db.query("INSERT INTO driver_requests SET ?", driverRequestData, (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+        });
     });
 };

@@ -19,7 +19,9 @@ import {
     getUserById,
     updateUserProfile,
     fetchUserPassword,
-    updatePassword
+    updatePassword,
+    createChangeRequest,
+    findUserByUuid
 } from "../models/driverModel.js";
 
 dotenv.config();
@@ -40,6 +42,24 @@ const getLocalIp = () => {
 let localIp = getLocalIp();
 let baseUrl = `http://${localIp}:${process.env.PORT}`;
 
+const generateUniqueId = async () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let id;
+    let isUnique = false;
+
+    while (!isUnique) {
+        id = Array.from({ length: 10 }, () => characters[Math.floor(Math.random() * characters.length)]).join("");
+
+        // Check if ID already exists in the database
+        const existingUser = await findUserByUuid(id);
+        if (!existingUser) {
+            isUnique = true;
+        }
+    }
+
+    return id;
+};
+
 // Signup API
 export const signup = async (req, res) => {
     const { name, email, password, phone_number, dl_number, rc_number } = req.body;
@@ -51,19 +71,16 @@ export const signup = async (req, res) => {
         }
 
         const hashedPassword = await argon2.hash(password);
-
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-            expiresIn: "1h",
-        });
+        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
         // Access files correctly using req.files
         const dlImage = req.files?.dl_image ? req.files.dl_image[0].filename : "";
         const rcImage = req.files?.rc_image ? req.files.rc_image[0].filename : "";
 
-
         await sendDriverVerificationEmail(req, email, token);
 
         const userData = {
+            driver_uuid: await generateUniqueId(), // Ensures unique 10-character ID
             name,
             email,
             phone_number,
@@ -160,67 +177,21 @@ export const getProfile = async (req, res) => {
         }
         const { show_password, ...other } = user
 
-        res.json({ 
-            success: true, 
-            user: { 
-                ...other, 
+        res.json({
+            success: true,
+            user: {
+                ...other,
                 profile_image: other.profile_image ? `${baseUrl}/uploads/profile_images/${other.profile_image}` : null,
                 dl_image: other.dl_image ? `${baseUrl}/uploads/dl_images/${other.dl_image}` : null,
                 rc_image: other.rc_image ? `${baseUrl}/uploads/rc_images/${other.rc_image}` : null
-            } 
-        });        
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
 // Update Profile API
-// export const updateProfile = async (req, res) => {
-//     const { name, phone_number, dl_number, rc_number } = req.body;
-//     const userId = req.user.id;
-
-//     try {
-//         const user = await getUserById(userId);
-//         if (!user) {
-//             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
-//         }
-
-//         let updateData = {
-//             name: name || user.name,
-//             phone_number: phone_number || user.phone_number,
-//             dl_number: dl_number || user.dl_number,
-//             rc_number: rc_number || user.rc_number,
-//             profile_image: user.profile_image,
-//             dl_image: user.dl_image,
-//             rc_image: user.rc_image,
-//         };
-
-//         if (req.file) {
-//             const newImagePath = `${req.file.filename}`;
-
-//             if (user.profile_image) {
-//                 const oldImagePath = path.join("public", user.profile_image);
-//                 if (fs.existsSync(oldImagePath)) {
-//                     fs.unlinkSync(oldImagePath);
-//                 }
-//             }
-//             updateData.profile_image = newImagePath;
-//         }
-
-//         const response = await updateUserProfile(userId, updateData);
-
-//         if (response.affectedRows > 0) {
-//             return res.status(200).json({
-//                 message: Msg.PROFILE_UPDATED,
-//             });
-//         } else {
-//             return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
-//         }
-//     } catch (error) {
-//         return res.status(500).json({ error: error.message });
-//     }
-// };
-
 export const updateProfile = async (req, res) => {
     const { name, phone_number, dl_number, rc_number } = req.body;
     const userId = req.user.id;
@@ -394,3 +365,33 @@ export const resetPassword = async (req, res) => {
         res.status(400).json({ message: Msg.INTERNAL_SERVER_ERROR + error.message });
     }
 };
+
+export const changeDocumentRequest = async (req, res) => {
+    const { document_type, reason } = req.body;
+
+    try {
+        // Get logged-in user
+        const user = await getUserById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        }
+
+        const documentRequestData = {
+            driver_id: user.id,
+            document_type,
+            reason
+        };
+
+        const response = await createChangeRequest(documentRequestData);
+
+        if (response.affectedRows > 0) {
+            res.status(201).json({ message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_SUCCESSFULL });
+        } else {
+            res.status(500).json({ message: Msg.DRIVER_DOCUMENT_CHANGE_REQUEST_FAILED });
+        }
+
+    } catch (error) {
+        console.error("Error in change document request:", error);
+        res.status(500).json({ message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
+    }
+}
