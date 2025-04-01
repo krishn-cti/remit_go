@@ -39,17 +39,17 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await findAdminByEmail(email);
+        const admin = await findAdminByEmail(email);
 
-        if (!user) return res.status(400).json({ message: Msg.USER_NOT_FOUND });
+        if (!admin) return res.status(400).json({ message: Msg.USER_NOT_FOUND });
 
-        if (!user.email_verified_at) return res.status(403).json({ message: Msg.VERIFY_EMAIL_FIRST });
+        if (!admin.email_verified_at) return res.status(403).json({ message: Msg.VERIFY_EMAIL_FIRST });
 
-        const isMatch = await argon2.verify(user.password, password);
+        const isMatch = await argon2.verify(admin.password, password);
         if (!isMatch) return res.status(400).json({ message: Msg.INVALID_CREDENTIALS });
 
-        const token = generateToken(user);
-        res.json({ message: Msg.LOGIN_SUCCESSFULL, token, user: { ...user, profile_image: `${baseUrl}/uploads/profile_images/${user.profile_image}` } });
+        const token = generateToken(admin);
+        res.json({ message: Msg.LOGIN_SUCCESSFULL, token, admin: { ...admin, profile_image: `${baseUrl}/uploads/profile_images/${admin.profile_image}` } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -63,13 +63,13 @@ export const getAdminProfile = async (req, res) => {
         const localIp = getLocalIp();
         const baseUrl = `http://${localIp}:${process.env.PORT}`;
 
-        const user = await getAdmin(req.user.id);
-        if (!user) {
+        const admin = await getAdmin(req.user.id);
+        if (!admin) {
             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
         }
-        const { show_password, ...other } = user
+        const { show_password, ...other } = admin
 
-        res.json({ success: true, user: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
+        res.json({ success: true, admin: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -78,34 +78,34 @@ export const getAdminProfile = async (req, res) => {
 // Update Profile API
 export const updateProfile = async (req, res) => {
     const { name, phone_number } = req.body;
-    const userId = req.user.id;
+    const adminId = req.user.id;
 
     try {
-        const user = await getAdmin(userId);
-        if (!user) {
+        const admin = await getAdmin(adminId);
+        if (!admin) {
             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
         }
 
         let updateData = {
-            name: name || user.name,
-            phone_number: phone_number || user.phone_number,
-            profile_image: user.profile_image,
+            name: name || admin.name,
+            phone_number: phone_number || admin.phone_number,
+            profile_image: admin.profile_image,
         };
 
         if (req.file) {
             const newImagePath = `${req.file.filename}`;
 
-            if (user.profile_image) {
-                const oldImagePath = path.join("public", user.profile_image);
+            if (admin.profile_image) {
+                const oldImagePath = path.join("public", admin.profile_image);
                 if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath); 
+                    fs.unlinkSync(oldImagePath);
                 }
             }
 
             updateData.profile_image = newImagePath;
         }
 
-        const response = await updateAdminProfile(userId, updateData);
+        const response = await updateAdminProfile(adminId, updateData);
 
         if (response.affectedRows > 0) {
             return res.status(200).json({
@@ -123,7 +123,7 @@ export const updateProfile = async (req, res) => {
 export const changePassword = async (req, res) => {
     try {
         const { old_password, new_password } = req.body;
-        const userId = req.user.id;
+        const adminId = req.user.id;
 
         if (!old_password || !new_password) {
             return res.status(400).json({
@@ -132,22 +132,22 @@ export const changePassword = async (req, res) => {
             });
         }
 
-        const user = await fetchUserPassword(userId);
-        if (!user || !user.password) {
+        const admin = await fetchUserPassword(adminId);
+        if (!admin || !admin.password) {
             return res.status(404).json({
                 message: Msg.USER_NOT_FOUND,
                 success: false,
             });
         }
 
-        const isMatch = await argon2.verify(user.password, old_password);
+        const isMatch = await argon2.verify(admin.password, old_password);
         if (!isMatch) {
             return res.status(400).json({ message: Msg.INCORRECT_OLD_PASSWORD, success: false });
         }
 
         const hashedNewPassword = await argon2.hash(new_password);
 
-        const response = await updatePassword(hashedNewPassword, new_password, userId);
+        const response = await updatePassword(hashedNewPassword, new_password, adminId);
 
         if (response?.affectedRows > 0) {
             return res.json({
@@ -171,12 +171,12 @@ export const forgotPassword = async (req, res) => {
 
     const { email } = req.body;
     try {
-        const user = await findAdminByEmail(email);
+        const admin = await findAdminByEmail(email);
         //console.log('yutuytututuyt', user);
 
-        if (!user) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+        if (!admin) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
 
-        const resetToken = jwt.sign({ id: user.id }, process.env.ADMIN_JWT_SECRET);
+        const resetToken = jwt.sign({ id: admin.id }, process.env.ADMIN_JWT_SECRET);
         const resetLink = `http://${localIp}:${process.env.PORT}/api/admin/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
@@ -196,7 +196,7 @@ export const forgotPassword = async (req, res) => {
 
         await transporter.sendMail({
             from: '"No Reply" <no-reply@gmail.com>',
-            to: user.email,
+            to: admin.email,
             subject: "Password Reset Request",
             html: emailHtml,
         });
