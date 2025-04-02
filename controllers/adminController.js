@@ -1,5 +1,5 @@
 
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, createUser, updateUser, getUserById } from "../models/adminModel.js";
 import { generateToken } from "../utils/adminAuth.js";
 import argon2 from 'argon2';
 import dotenv from 'dotenv';
@@ -47,12 +47,13 @@ export const login = async (req, res) => {
         const token = generateToken(admin);
         res.json({ success: true, message: Msg.LOGIN_SUCCESSFULL, token, admin: { ...admin, profile_image: `${baseUrl}/uploads/profile_images/${admin.profile_image}` } });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
 // Get Profile API
 export const getAdminProfile = async (req, res) => {
+
     try {
         const admin = await getAdminById(req.user.id);
         if (!admin) {
@@ -67,17 +68,68 @@ export const getAdminProfile = async (req, res) => {
 };
 
 // Update Profile API
+// export const updateProfile = async (req, res) => {
+//     const { name, phone_number } = req.body;
+//     const adminId = req.user.id;
+
+//     try {
+//         const admin = await getAdmin(adminId);
+//         if (!admin) {
+//             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
+//         }
+
+//         let updateData = {
+//             name: name || admin.name,
+//             phone_number: phone_number || admin.phone_number,
+//             profile_image: admin.profile_image,
+//         };
+
+//         if (req.file) {
+//             const newImagePath = `${req.file.filename}`;
+
+//             if (admin.profile_image) {
+//                 const oldImagePath = path.join("public", admin.profile_image);
+//                 if (fs.existsSync(oldImagePath)) {
+//                     fs.unlinkSync(oldImagePath);
+//                 }
+//             }
+
+//             updateData.profile_image = newImagePath;
+//         }
+
+//         const response = await updateAdminProfile(adminId, updateData);
+
+//         if (response.affectedRows > 0) {
+//             return res.status(200).json({
+//                 message: Msg.PROFILE_UPDATED,
+//             });
+//         } else {
+//             return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
+//         }
+//     } catch (error) {
+//         return res.status(500).json({ error: error.message });
+//     }
+// };
+
 export const updateProfile = async (req, res) => {
     const { name, phone_number } = req.body;
     const adminId = req.user.id;
 
+    // Validate required fields
+    if (!name || !phone_number) {
+        return res.status(400).json({
+            success: false,
+            message: "Name and phone number are required."
+        });
+    }
+
     try {
         const admin = await getAdminById(adminId);
         if (!admin) {
-            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+            return res.status(404).json({ message: Msg.USER_NOT_FOUND });
         }
 
-        let adminData = {
+        let updateData = {
             name: name || admin.name,
             phone_number: phone_number || admin.phone_number,
             profile_image: admin.profile_image,
@@ -93,7 +145,7 @@ export const updateProfile = async (req, res) => {
                 }
             }
 
-            adminData.profile_image = newImagePath;
+            updateData.profile_image = newImagePath;
         }
 
         const response = await updateAdminProfile(adminId, adminData);
@@ -110,6 +162,7 @@ export const updateProfile = async (req, res) => {
         return res.status(500).json({ success: false, error: error.message });
     }
 };
+
 
 // Change Password API
 export const changePassword = async (req, res) => {
@@ -148,13 +201,13 @@ export const changePassword = async (req, res) => {
             });
         } else {
             return res.status(500).json({
-                success: false,
                 message: Msg.PASSWORD_CHANGE_FAILED,
+                success: false,
             });
         }
     } catch (error) {
         console.error("Error changing password:", error);
-        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR });
+        res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR, success: false });
     }
 };
 
@@ -192,7 +245,7 @@ export const forgotPassword = async (req, res) => {
             html: emailHtml,
         });
 
-        res.status(200).json({ success: true, message: Msg.RECOVERY_EMAIL_SENT });
+        res.json({ success: true, message: Msg.RECOVERY_EMAIL_SENT });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -214,5 +267,62 @@ export const resetPassword = async (req, res) => {
         return res.json({ success: true, message: Msg.PROFILE_UPDATED, redirect: "/success" });
     } catch (error) {
         res.status(400).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR + error.message });
+    }
+};
+
+// Get All Users
+export const getUsers = async (req, res) => {
+    try {
+        const users = await getAllUsers();
+        res.status(200).json({ success: true, users });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+
+
+// Create User
+export const createNewUser = async (req, res) => {
+    const { name, email, phone_number, show_password } = req.body;
+
+    if (!name || !email || !phone_number || !show_password) {
+        return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+
+    try {
+        const newUser = { name, email, phone_number, show_password };
+        const result = await createUser(newUser);
+
+        res.status(201).json({ success: true, message: "User created successfully.", userId: result.insertId });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+export const editUser = async (req, res) => {
+    const { id, name, phone_number, show_password } = req.body; // Get id from payload
+
+    if (!id) {
+        return res.status(400).json({ success: false, message: "User ID is required in the request body." });
+    }
+
+    try {
+        const user = await getUserById(id);
+        if (!user) return res.status(404).json({ success: false, message: "User not found." });
+
+        const updatedUser = {
+            name: name || user.name,
+            phone_number: phone_number || user.phone_number,
+            show_password: show_password || user.show_password
+        };
+
+        await updateUser(id, updatedUser);
+        res.status(200).json({ success: true, message: "User updated successfully." });
+
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 };

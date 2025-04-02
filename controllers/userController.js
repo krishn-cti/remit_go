@@ -46,10 +46,10 @@ export const signup = async (req, res) => {
     try {
         const existingUser = await findUserByEmail(email);
         if (existingUser) {
-                return res.status(400).json({
-                    success: false,
-                    message: Msg.EMAIL_ALREADY_REGISTERED
-                })
+            return res.status(400).json({
+                success: false,
+                message: Msg.EMAIL_ALREADY_REGISTERED
+            })
         }
 
         const hashedPassword = await argon2.hash(password);
@@ -58,7 +58,7 @@ export const signup = async (req, res) => {
             expiresIn: "1h",
         });
 
-        await sendVerificationEmail(req,email, token);
+        await sendVerificationEmail(req, email, token);
 
         const userData = {
             name,
@@ -73,12 +73,12 @@ export const signup = async (req, res) => {
         const response = await createUser(userData);
 
         if (response.affectedRows > 0) {
-            res.status(201).json({    
-                success: true,  
+            res.status(201).json({
+                success: true,
                 message: `${Msg.SIGNUP_SUCCESSFULL} (${email}) to verify your account.`,
             });
         } else {
-            res.status(500).json({ success: false, message:Msg.SIGNUP_FAILED});
+            res.status(500).json({ success: false, message: Msg.SIGNUP_FAILED });
         }
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -124,9 +124,9 @@ export const login = async (req, res) => {
 
     try {
         const user = await findUserByEmail(email);
-        if (!user) return res.status(400).json({ success: false, message:Msg.USER_NOT_FOUND });
+        if (!user) return res.status(400).json({ success: false, message: Msg.USER_NOT_FOUND });
 
-        if (!user.email_verified_at) return res.status(403).json({ success: false, message:Msg.VERIFY_EMAIL_FIRST});
+        if (!user.email_verified_at) return res.status(403).json({ success: false, message: Msg.VERIFY_EMAIL_FIRST });
 
         const isMatch = await argon2.verify(user.password, password);
         if (!isMatch) return res.status(400).json({ success: false, message: Msg.INVALID_CREDENTIALS });
@@ -178,7 +178,7 @@ export const updateProfile = async (req, res) => {
             if (user.profile_image) {
                 const oldImagePath = path.join("public", user.profile_image);
                 if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath); 
+                    fs.unlinkSync(oldImagePath);
                 }
             }
 
