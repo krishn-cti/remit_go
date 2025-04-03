@@ -64,33 +64,12 @@ export const getAllUsers = () => {
     });
 };
 
-// Create a new user
-export const createUser = (userData) => {
-    return new Promise((resolve, reject) => {
-        db.query("INSERT INTO users SET ?", userData, (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-        });
-    });
-};
-
 // Update user by ID
 export const updateUser = (id, userData) => {
     return new Promise((resolve, reject) => {
         db.query("UPDATE users SET ? WHERE id = ?", [userData, id], (err, result) => {
             if (err) return reject(err);
             resolve(result);
-        });
-    });
-};
-
-// Get user by ID
-export const getUserById = (id) => {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM users WHERE id = ?", [id], (err, results) => {
-            if (err) return reject(err);
-            if (results.length === 0) return resolve(null);
-            resolve(results[0]);
         });
     });
 };

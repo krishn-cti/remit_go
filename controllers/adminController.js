@@ -1,5 +1,4 @@
 
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, createUser, updateUser, getUserById } from "../models/adminModel.js";
 import { generateToken } from "../utils/adminAuth.js";
 import argon2 from 'argon2';
 import dotenv from 'dotenv';
@@ -10,6 +9,9 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
 import fs from 'fs';
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers } from "../models/adminModel.js";
+import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
+import { sendWelcomeEmail } from "../config/mailer.js";
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -68,60 +70,9 @@ export const getAdminProfile = async (req, res) => {
 };
 
 // Update Profile API
-// export const updateProfile = async (req, res) => {
-//     const { name, phone_number } = req.body;
-//     const adminId = req.user.id;
-
-//     try {
-//         const admin = await getAdmin(adminId);
-//         if (!admin) {
-//             return res.status(404).json({ message: Msg.USER_NOT_FOUND });
-//         }
-
-//         let updateData = {
-//             name: name || admin.name,
-//             phone_number: phone_number || admin.phone_number,
-//             profile_image: admin.profile_image,
-//         };
-
-//         if (req.file) {
-//             const newImagePath = `${req.file.filename}`;
-
-//             if (admin.profile_image) {
-//                 const oldImagePath = path.join("public", admin.profile_image);
-//                 if (fs.existsSync(oldImagePath)) {
-//                     fs.unlinkSync(oldImagePath);
-//                 }
-//             }
-
-//             updateData.profile_image = newImagePath;
-//         }
-
-//         const response = await updateAdminProfile(adminId, updateData);
-
-//         if (response.affectedRows > 0) {
-//             return res.status(200).json({
-//                 message: Msg.PROFILE_UPDATED,
-//             });
-//         } else {
-//             return res.status(400).json({ message: Msg.NO_PROFILE_CHANGES });
-//         }
-//     } catch (error) {
-//         return res.status(500).json({ error: error.message });
-//     }
-// };
-
 export const updateProfile = async (req, res) => {
     const { name, phone_number } = req.body;
     const adminId = req.user.id;
-
-    // Validate required fields
-    if (!name || !phone_number) {
-        return res.status(400).json({
-            success: false,
-            message: "Name and phone number are required."
-        });
-    }
 
     try {
         const admin = await getAdminById(adminId);
@@ -135,8 +86,8 @@ export const updateProfile = async (req, res) => {
             profile_image: admin.profile_image,
         };
 
-        if (req.file) {
-            const newImagePath = `${req.file.filename}`;
+        if (req.files?.profile_image) {
+            const newImagePath = `${req.files.profile_image[0].filename}`;
 
             if (admin.profile_image) {
                 const oldImagePath = path.join("public", admin.profile_image);
@@ -274,53 +225,96 @@ export const resetPassword = async (req, res) => {
 export const getUsers = async (req, res) => {
     try {
         const users = await getAllUsers();
-        res.status(200).json({ success: true, users });
+
+        const formattedUsers = users.map(user => ({
+            ...user,
+            profile_image: user.profile_image ? `${baseUrl}/uploads/profile_images/${user.profile_image}` : null,
+        }));
+
+        res.status(200).json({ success: true, users: formattedUsers });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 };
-
-
 
 
 // Create User
 export const createNewUser = async (req, res) => {
-    const { name, email, phone_number, show_password } = req.body;
-
-    if (!name || !email || !phone_number || !show_password) {
-        return res.status(400).json({ success: false, message: "All fields are required." });
-    }
+    const { name, email, country_code, phone_number } = req.body;
 
     try {
-        const newUser = { name, email, phone_number, show_password };
-        const result = await createUser(newUser);
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: Msg.EMAIL_ALREADY_REGISTERED
+            });
+        }
 
-        res.status(201).json({ success: true, message: "User created successfully.", userId: result.insertId });
+        const password = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedPassword = await argon2.hash(password);
+
+        const profileImage = req.files?.profile_image?.[0]?.filename || "";
+
+        // Create user in database
+        const userData = {
+            name,
+            email,
+            country_code,
+            phone_number,
+            password: hashedPassword,
+            profile_image: profileImage,
+            email_verified_at: new Date()
+        };
+
+        const result = await createUser(userData);
+
+        if (result.insertId) {
+            await sendWelcomeEmail(req, name, email, password);
+        }
+
+        res.status(201).json({ success: true, message: Msg.USER_CREATED });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 };
 
 
-export const editUser = async (req, res) => {
-    const { id, name, phone_number, show_password } = req.body; // Get id from payload
+export const editUserProfile = async (req, res) => {
+    const { id, name, phone_number } = req.body;
 
     if (!id) {
-        return res.status(400).json({ success: false, message: "User ID is required in the request body." });
+        return res.status(400).json({ success: false, message: "User ID is required." });
     }
 
     try {
         const user = await getUserById(id);
-        if (!user) return res.status(404).json({ success: false, message: "User not found." });
-
-        const updatedUser = {
+        if (!user) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+        
+        let updatedUser = {
             name: name || user.name,
             phone_number: phone_number || user.phone_number,
-            show_password: show_password || user.show_password
+            profile_image: user.profile_image
         };
 
-        await updateUser(id, updatedUser);
-        res.status(200).json({ success: true, message: "User updated successfully." });
+        if (req.files?.profile_image) {
+            const newImagePath = `${req.files.profile_image[0].filename}`;
+
+            if (user.profile_image) {
+                const oldImagePath = path.join("public/uploads/", user.profile_image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+
+            updatedUser.profile_image = newImagePath;
+        }
+
+        await updateUserProfile(id, updatedUser);
+
+        res.status(200).json({ success: true, message: Msg.PROFILE_UPDATED });
 
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

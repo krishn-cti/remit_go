@@ -19,6 +19,7 @@ const messages = {
     PASSWORD_UPDATED: "Password updated successfully!",
     DRIVER_DOCUMENT_CHANGE_REQUEST_SUCCESSFULL: "Document change request submitted successfully!",
     DRIVER_DOCUMENT_CHANGE_REQUEST_FAILED: "Document change request failed!",
+    USER_CREATED: "User created successfully.",
 };
 
 export default messages

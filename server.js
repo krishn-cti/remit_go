@@ -24,8 +24,8 @@ import driverRoutes from './routes/driver.js';
 import adminRoutes from './routes/admin.js';
 
 app.use("/api/user", userRoutes);
-app.use("/api/driver" ,driverRoutes);
-app.use("/api/admin" ,adminRoutes);
+app.use("/api/driver", driverRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/success", (req, res) => {
     res.render("success");

@@ -148,7 +148,7 @@ export const getProfile = async (req, res) => {
         }
         const { show_password, ...other } = user
 
-        res.json({ success: true, user: { ...other, profile_image: `${baseUrl}/uploads/profile_images/${other.profile_image}` } });
+        res.json({ success: true, user: { ...other, profile_image: other.profile_image ? `${baseUrl}/uploads/profile_images/${other.profile_image}` : null, } });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -172,8 +172,8 @@ export const updateProfile = async (req, res) => {
             profile_image: user.profile_image,
         };
 
-        if (req.file) {
-            const newImagePath = `${req.file.filename}`;
+        if (req.files?.profile_image) {
+            const newImagePath = `${req.files.profile_image[0].filename}`;
 
             if (user.profile_image) {
                 const oldImagePath = path.join("public", user.profile_image);
