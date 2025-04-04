@@ -71,7 +71,7 @@ export const signup = async (req, res) => {
         }
 
         const hashedPassword = await argon2.hash(password);
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ email }, process.env.DRIVER_JWT_SECRET, { expiresIn: "1h" });
 
         // Access files correctly using req.files
         const dlImage = req.files?.dl_image ? req.files.dl_image[0].filename : "";
@@ -325,7 +325,7 @@ export const forgotPassword = async (req, res) => {
         const driver = await findDriverByEmail(email);
         if (!driver) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
 
-        const resetToken = jwt.sign({ id: driver.id }, process.env.JWT_SECRET);
+        const resetToken = jwt.sign({ id: driver.id }, process.env.DRIVER_JWT_SECRET);
         const resetLink = `${baseUrl}/api/driver/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
@@ -365,7 +365,7 @@ export const loadResetPasswordForm = async (req, res) => {
 export const resetPassword = async (req, res) => {
     const { password, token } = req.body;
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.DRIVER_JWT_SECRET);
         const hashedNewPassword = await argon2.hash(password);
 
         await updatePassword(hashedNewPassword, password, decoded.id);

@@ -9,7 +9,7 @@ export const driverAuth = async(req, res, next) => {
     if (!token) return res.status(403).json({ error: Msg.ACCESS_DENIED });
 
     try {
-        const verified = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
+        const verified = jwt.verify(token.replace("Bearer ", ""), process.env.DRIVER_JWT_SECRET);
                 req.user= verified;
         next();
     } catch (error) {
