@@ -1,4 +1,4 @@
-import { getUserPickupAddressByUser } from "../models/pickupAddressModel.js";
+import { addUserPickupAddressByUser, getUserPickupAddressByUser } from "../models/pickupAddressModel.js";
 import dotenv from 'dotenv';
 import os from "os";
 import Msg from "../utils/message.js";
@@ -19,6 +19,37 @@ const getLocalIp = () => {
 
 let localIp = getLocalIp();
 let baseUrl = `http://${localIp}:${process.env.PORT}`;
+
+export const addPickupAddress = async(req,res)=>{
+    try {   
+        const{location_name	, house_number,status, address_line,country, state, zip_code,location, latitude, longitude} = req.body
+        console.log("req.body: ", req.body)
+    const data = {
+        location_name, 
+        house_number, 
+        address_line,
+        country,   
+        state, 
+        zip_code,
+        location, 
+        latitude, 
+        longitude,
+        status,
+        user_id:req.user.id
+    }
+    console.log("data: ", data)
+     const savedInfo = await addUserPickupAddressByUser(data);
+     console.log("savedInfo:", savedInfo)
+     res.status(200).json({ success: true, message: Msg.DATA_RETRIEVED, data: savedInfo });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+
+
+
+
 
 // Get All users pickup address
 export const getPickupAddresses = async (req, res) => {

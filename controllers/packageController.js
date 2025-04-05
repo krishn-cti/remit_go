@@ -1,4 +1,4 @@
-import { getPackages, sendPackageToDriver } from "../models/packageModel.js";
+import { getPackageById, getPackages, sendPackageToDriver } from "../models/packageModel.js";
 import dotenv from 'dotenv';
 import os from "os";
 import Msg from "../utils/message.js";
@@ -36,6 +36,17 @@ export const getAllPackages = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+export const getSinglePackage = async (req, res) => {
+    try{
+       const {package_id} = req.params;
+       const singlePackage = await getPackageById(package_id);
+       res.status(200).json({ success: true, message: Msg.DATA_RETRIEVED, packages: singlePackage });
+    }
+    catch(error){
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
 
 export const sendPackage = async (req, res) => {
     try {
