@@ -89,3 +89,40 @@ export const updatePassword = (newPassword, show_password, id) => {
         );
     });
 };
+
+export const getPickup = (id) => {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT * FROM user_pickup_addresses WHERE user_id = ?", [id], (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+        });
+    });
+}
+
+
+export const getDropup = (id) =>{
+    return new Promise((resolve, reject)=>{
+        db.query("SELECT * FROM user_dropup_addresses WHERE user_id = ?",[id],(err,result) =>{
+            if(err) reject(err);
+            resolve (result);
+        })
+    })
+}
+
+export const getPackagesModel = ()=>{
+    return new Promise((resolve, reject)=>{
+        db.query("SELECT * FROM packages",(err,result)=>{
+            if(err) reject(err);
+            resolve (result);
+        }) 
+    })
+}
+
+export const getPaymentModel = (id) =>{
+    return new Promise((resolve,reject)=>{
+        db.query("SELECT * FROM user_payment_methods WHERE user_id = ?",[id],(err,result) =>{
+            if(err) reject(err);
+            resolve (result);
+        })
+    })
+}

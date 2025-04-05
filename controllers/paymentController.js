@@ -36,7 +36,7 @@ export const createCheckoutSession = async (req, res) => {
         console.error("Error creating checkout session:", error);
         res.status(500).json({ error: "Failed to create checkout session" });
     }
-};
+};      
 
 // Success API
 export const successPayment = async (req, res) => {

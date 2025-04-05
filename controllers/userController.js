@@ -18,7 +18,11 @@ import {
     getUserById,
     updateUserProfile,
     fetchUserPassword,
-    updatePassword
+    updatePassword,
+    getPickup,
+    getDropup,
+    getPackagesModel,
+    getPaymentModel
 } from "../models/userModel.js";
 
 dotenv.config();
@@ -303,3 +307,59 @@ export const resetPassword = async (req, res) => {
         res.status(400).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR + error.message });
     }
 };
+
+export const pickupAdress = async(req, res) =>{
+    try {
+        const { id } = req.user;
+        console.log(id);
+        const rows = await getPickup(id);
+        if (!rows) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+        return res.status(200).json( {success: true, message:'User pickup found' , data: rows[0]})
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export const dropAddress = async(req, res)=>{
+    try {
+        const {id} = req.user;
+        console.log(id)
+        const user = await getDropup(id);
+        console.log(user)
+        if(!user){
+           return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND })
+        }
+        return res.status(200).json({sucess:true, message:'User droupup found', data:user})
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export const getPackages = async(req,res)=>{
+   try {
+    const data = await getPackagesModel();      
+    if(!data){
+        return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND })
+     }
+     return res.status(200).json({sucess:true, message:'User package found', data:data})
+   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+   }
+}
+
+export const getPaymentMethode = async(req,res) =>{
+    try {
+        const {id} = req.user;
+        console.log(id);
+        
+        const user = await getPaymentModel(id);
+        if(!user){
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND })
+         }
+         return res.status(200).json({sucess:true, message:'User payment found', data:user})
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}

@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword } from "../controllers/userController.js";
+import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, pickupAdress, dropAddress, getPackages, getPaymentMethode } from "../controllers/userController.js";
 import { auth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/multer.js";
 
@@ -15,4 +15,10 @@ router.put("/change-password", auth, changePassword);
 router.post("/forgot-password", forgotPassword);
 router.get("/reset-password/:token", loadResetPasswordForm)
 router.post("/reset-password", resetPassword);
+
+
+router.get("/pickup-address",auth,pickupAdress);
+router.get("/dropup-address",auth,dropAddress);
+router.get("/packages",auth,getPackages);
+router.get("/paymentMethod",auth,getPaymentMethode);
 export default router;
