@@ -292,7 +292,7 @@ export const editUserProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
-        
+
         let updatedUser = {
             name: name || user.name,
             phone_number: phone_number || user.phone_number,
