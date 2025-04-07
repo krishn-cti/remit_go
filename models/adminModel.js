@@ -73,3 +73,13 @@ export const updateUser = (id, userData) => {
         });
     });
 };
+
+// Get all drivers
+export const getAllDrivers = () => {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT * FROM drivers", (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+        });
+    });
+};

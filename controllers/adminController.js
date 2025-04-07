@@ -9,9 +9,11 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
 import fs from 'fs';
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers } from "../models/adminModel.js";
 import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
 import { sendWelcomeEmail } from "../config/mailer.js";
+import { validationResult } from "express-validator";
+import { createDriver, findDriverByEmail } from "../models/driverModel.js";
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -237,9 +239,9 @@ export const getUsers = async (req, res) => {
     }
 };
 
-
 // Create User
 export const createNewUser = async (req, res) => {
+
     const { name, email, country_code, phone_number } = req.body;
 
     try {
@@ -292,7 +294,7 @@ export const editUserProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
         }
-        
+
         let updatedUser = {
             name: name || user.name,
             phone_number: phone_number || user.phone_number,
@@ -316,6 +318,79 @@ export const editUserProfile = async (req, res) => {
 
         res.status(200).json({ success: true, message: Msg.PROFILE_UPDATED });
 
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Get All Drivers
+export const getDrivers = async (req, res) => {
+    try {
+        const drivers = await getAllDrivers();
+
+        const formattedUsers = drivers.map(driver => ({
+            ...driver,
+            profile_image: driver.profile_image ? `${baseUrl}/uploads/profile_images/${driver.profile_image}` : null,
+        }));
+
+        res.status(200).json({ success: true, drivers: formattedUsers });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Create User
+export const createNewDriver = async (req, res) => {
+
+    // // Check for validation errors
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //     return res.status(400).json({
+    //         success: false,
+    //         message: errors.array()[0].msg, // Send only the first error message
+    //     });
+    // }
+
+    const { name, email, country_code, phone_number, dl_number, rc_number } = req.body;
+
+    try {
+        const existingUser = await findDriverByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: Msg.EMAIL_ALREADY_REGISTERED
+            });
+        }
+
+        const password = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedPassword = await argon2.hash(password);
+
+        const profileImage = req.files?.profile_image?.[0]?.filename || "";
+        const dlImage = req.files?.dl_image?.[0]?.filename || "";
+        const rcImage = req.files?.rc_image?.[0]?.filename || "";
+
+        // Create user in database
+        const userData = {
+            name,
+            email,
+            country_code,
+            phone_number,
+            dl_number,
+            rc_number,
+            password: hashedPassword,
+            profile_image: profileImage,
+            dl_image: dlImage,
+            rc_image: rcImage,
+            email_verified_at: new Date()
+        };
+
+        const result = await createDriver(userData);
+
+        if (result.insertId) {
+            await sendWelcomeEmail(req, name, email, password);
+        }
+
+        res.status(201).json({ success: true, message: Msg.DRIVER_CREATED });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

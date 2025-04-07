@@ -1,7 +1,8 @@
 import express from "express";
 import {
     login, getAdminProfile, forgotPassword, loadResetPasswordForm, resetPassword, updateProfile,
-    getUsers, changePassword, createNewUser, editUserProfile
+    getUsers, changePassword, createNewUser, editUserProfile, getDrivers,
+    createNewDriver
 } from "../controllers/adminController.js";
 import { adminAuth } from "../middleware/adminMiddleware.js";
 import { upload } from "../config/multer.js";
@@ -18,6 +19,8 @@ router.post("/reset-password", resetPassword);
 router.get("/get-users", adminAuth, getUsers);
 router.post("/create-user", adminAuth, upload, createNewUser);
 router.post("/update-user", adminAuth, upload, editUserProfile);
+router.get("/get-drivers", adminAuth, getDrivers);
 
+router.post("/create-driver", adminAuth, upload, createNewDriver);
 
 export default router;

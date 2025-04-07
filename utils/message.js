@@ -20,6 +20,7 @@ const messages = {
     DRIVER_DOCUMENT_CHANGE_REQUEST_SUCCESSFULL: "Document change request submitted successfully!",
     DRIVER_DOCUMENT_CHANGE_REQUEST_FAILED: "Document change request failed!",
     USER_CREATED: "User created successfully.",
+    DRIVER_CREATED: "Driver created successfully.",
 };
 
 export default messages
