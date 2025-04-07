@@ -23,6 +23,14 @@ const messages = {
     DATA_RETRIEVED: "Data retrieved successfully.",
     PACKAGE_SENT: "Package sent successfully.",
     SOMETHING_WENT_WRONG: "Something went wrong!.",
+    PICKUP_ADDRESS_NOT_FOUND: "Pickup address not found.",
+    PICKUP_ADDRESS_CREATED: "Pickup address created successfully.",
+    PICKUP_ADDRESS_UPDATED: "Pickup address updated successfully.",
+    PICKUP_ADDRESS_DELETED: "Pickup address deleted successfully.",
+    DROPUP_ADDRESS_NOT_FOUND: "Dropup address not found.",
+    DROPUP_ADDRESS_CREATED: "Dropup address created successfully.",
+    DROPUP_ADDRESS_UPDATED: "Dropup address updated successfully.",
+    DROPUP_ADDRESS_DELETED: "Dropup address deleted successfully.",
 };
 
 export default messages

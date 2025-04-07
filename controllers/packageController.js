@@ -2,7 +2,7 @@ import { getPackages, sendPackageToDriver } from "../models/packageModel.js";
 import dotenv from 'dotenv';
 import os from "os";
 import Msg from "../utils/message.js";
-import { sendPackageSchema } from "../utils/validators/sendPackage.validator.js";
+import { sendPackageSchema } from "../utils/validators/formValidation.validator.js";
 
 dotenv.config();
 
@@ -76,7 +76,6 @@ export const sendPackage = async (req, res) => {
         }
 
     } catch (error) {
-        console.error("Send Package Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
