@@ -66,10 +66,15 @@ export const getAllUsers = () => {
 
 // Update user by ID
 export const updateUser = (id, userData) => {
+    const fields = Object.keys(userData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(userData), id];
+  
     return new Promise((resolve, reject) => {
-        db.query("UPDATE users SET ? WHERE id = ?", [userData, id], (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-        });
+      const query = `UPDATE users SET ${fields} WHERE id = ?`;
+      db.query(query, values, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
     });
-};
+  };
+  

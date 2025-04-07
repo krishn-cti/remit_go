@@ -162,6 +162,7 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
     const { name, phone_number, country_code } = req.body;
     const userId = req.user.id;
+    console.log(userId)
 
     try {
         const user = await getUserById(userId);

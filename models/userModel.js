@@ -67,6 +67,7 @@ export const updateUserProfile = async (id, userData) => {
     }
 };
 
+
 export const fetchUserPassword = (id) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT password FROM users WHERE id = ?", [id], (err, result) => {
