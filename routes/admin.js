@@ -6,6 +6,7 @@ import {
 } from "../controllers/adminController.js";
 import { adminAuth } from "../middleware/adminMiddleware.js";
 import { upload } from "../config/multer.js";
+import { getAllPackages } from "../controllers/packageController.js";
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post("/create-user", adminAuth, upload, createNewUser);
 router.post("/update-user", adminAuth, upload, editUserProfile);
 router.get("/get-drivers", adminAuth, getDrivers);
 
+router.get("/get-all-packages", adminAuth, getAllPackages);
 router.post("/create-driver", adminAuth, upload, createNewDriver);
 
 export default router;

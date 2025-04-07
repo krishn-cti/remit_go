@@ -54,7 +54,7 @@ export const signup = async (req, res) => {
 
         const hashedPassword = await argon2.hash(password);
 
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ email }, process.env.USER_JWT_SECRET, {
             expiresIn: "1h",
         });
 
@@ -254,7 +254,7 @@ export const forgotPassword = async (req, res) => {
         const user = await findUserByEmail(email);
         if (!user) return res.status(404).json({ message: Msg.USER_NOT_FOUND });
 
-        const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+        const resetToken = jwt.sign({ id: user.id }, process.env.USER_JWT_SECRET);
         const resetLink = `${baseUrl}/api/user/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
@@ -294,7 +294,7 @@ export const loadResetPasswordForm = async (req, res) => {
 export const resetPassword = async (req, res) => {
     const { password, token } = req.body;
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.USER_JWT_SECRET);
         const hashedNewPassword = await argon2.hash(password);
 
         await updatePassword(hashedNewPassword, password, decoded.id);

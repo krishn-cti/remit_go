@@ -12,7 +12,6 @@ import fs from 'fs';
 import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers } from "../models/adminModel.js";
 import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
 import { sendWelcomeEmail } from "../config/mailer.js";
-import { validationResult } from "express-validator";
 import { createDriver, findDriverByEmail } from "../models/driverModel.js";
 
 dotenv.config();
