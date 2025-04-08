@@ -9,8 +9,9 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
 import fs from 'fs';
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers } from "../models/adminModel.js";
 import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
+import { createDriver, findDriverByEmail, findDriverByUuid, getDriverById, updateDriverProfile } from "../models/driverModel.js"
 import { sendWelcomeEmail } from "../config/mailer.js";
 
 dotenv.config();
@@ -31,6 +32,23 @@ const getLocalIp = () => {
 let localIp = getLocalIp();
 let baseUrl = `http://${localIp}:${process.env.PORT}`;
 
+const generateUniqueId = async () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let id;
+    let isUnique = false;
+
+    while (!isUnique) {
+        id = Array.from({ length: 10 }, () => characters[Math.floor(Math.random() * characters.length)]).join("");
+
+        // Check if ID already exists in the database
+        const existingDriver = await findDriverByUuid(id);
+        if (!existingDriver) {
+            isUnique = true;
+        }
+    }
+
+    return id;
+};
 
 // Login API
 export const login = async (req, res) => {
@@ -281,7 +299,7 @@ export const createNewUser = async (req, res) => {
 
 
 export const editUserProfile = async (req, res) => {
-    const { id, name, phone_number } = req.body;
+    const { id, name, country_code, phone_number } = req.body;
 
     if (!id) {
         return res.status(400).json({ success: false, message: "User ID is required." });
@@ -295,21 +313,22 @@ export const editUserProfile = async (req, res) => {
 
         let updatedUser = {
             name: name || user.name,
+            country_code: country_code || user.country_code,
             phone_number: phone_number || user.phone_number,
             profile_image: user.profile_image
         };
 
-        if (req.files?.profile_image) {
-            const newImagePath = `${req.files.profile_image[0].filename}`;
+        const uploadedImage = req.files?.profile_image?.[0]?.filename;
 
+        if (uploadedImage) {
             if (user.profile_image) {
-                const oldImagePath = path.join("public/uploads/", user.profile_image);
-                if (fs.existsSync(oldImagePath)) {
+                const oldImagePath = path.resolve("public", "uploads", "profile_images", user.profile_image);
+                if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
                     fs.unlinkSync(oldImagePath);
                 }
             }
 
-            updatedUser.profile_image = newImagePath;
+            updatedUser.profile_image = uploadedImage;
         }
 
         await updateUserProfile(id, updatedUser);
@@ -318,5 +337,100 @@ export const editUserProfile = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+//getAllDrivers
+export const getDrivers = async (req, res) => {
+    try {
+        const drivers = await getAllDrivers();
+        const formattedDrivers = drivers.map(driver => ({
+            ...driver,
+            profile_image: driver.profile_image ? `${baseUrl}/uploads/profile_images/${driver.profile_image}` : null,
+            dl_image: driver.dl_image ? `${baseUrl}/uploads/dl_images/${driver.dl_image}` : null,
+            rc_image: driver.rc_image ? `${baseUrl}/uploads/rc_images/${driver.rc_image}` : null
+        }));
+        res.status(200).json({ success: true, drivers: formattedDrivers })
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message })
+    }
+}
+
+//create Drivers
+export const createNewDriver = async (req, res) => {
+    const { name, email, country_code, phone_number } = req.body;
+    try {
+
+        const existingDriver = await findDriverByEmail(email);
+        if (existingDriver) {
+            return res.status(400).json({ success: false, message: Msg.EMAIL_ALREADY_REGISTERED });
+        }
+
+        const password = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedPassword = await argon2.hash(password);
+        const profileImage = req.files?.profile_image?.[0].filename || "";
+
+        const driverData = {
+            driver_uuid: await generateUniqueId(),
+            name,
+            email,
+            country_code,
+            phone_number,
+            password: hashedPassword,
+            profile_image: profileImage,
+            email_verified_at: new Date()
+        }
+
+        const product = await createDriver(driverData)
+
+        if (product.insertId) {
+            await sendWelcomeEmail(req, name, email, password);
+        }
+
+        res.status(201).json({ success: true, message: Msg.DRIVER_CREATED });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export const editDriverProfile = async (req, res) => {
+    const { id, name, country_code, phone_number } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ success: false, message: "Driver's ID is required" });
+    }
+
+    try {
+        const driver = await getDriverById(id);
+
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.DRIVER_NOT_FOUND });
+        }
+
+        let updateDriver = {
+            name: name || driver.name,
+            country_code: country_code || driver.country_code,
+            phone_number: phone_number || driver.phone_number,
+            profile_image: driver.profile_image
+        };
+
+        const uploadedImage = req.files?.profile_image?.[0]?.filename;
+        if (uploadedImage) {
+            if (driver.profile_image) {
+                const oldImagePath = path.resolve("public", "uploads", "profile_images", driver.profile_image);
+
+                if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+
+            updateDriver.profile_image = uploadedImage;
+        }
+
+        await updateDriverProfile(id, updateDriver);
+        return res.status(200).json({ success: true, message: Msg.PROFILE_UPDATED });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
