@@ -9,10 +9,12 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
 import fs from 'fs';
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers, deleteDriver, deleteUser, updateUserStatus, updateDriverStatus } from "../models/adminModel.js";
 import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
 import { createDriver, findDriverByEmail, findDriverByUuid, getDriverById, updateDriverProfile } from "../models/driverModel.js"
 import { sendWelcomeEmail } from "../config/mailer.js";
+import { createPackage, deletePackageData, getPackageById, getPackages, updatePackage } from "../models/packageModel.js";
+import { changeStatusSchema, createPackageSchema, updatePackageSchema } from "../utils/validators/formValidation.validator.js";
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -239,6 +241,25 @@ export const resetPassword = async (req, res) => {
     }
 };
 
+//get admin dashboard
+export const getDashboard = async (req, res) => {
+    try {
+        const totalUsers = await getAllUsers();
+        const totalDrivers = await getAllDrivers();
+        const totalPackages = await getPackages();
+
+        const data = {
+            total_users: totalUsers.length,
+            total_drivers: totalDrivers.length,
+            total_packages: totalPackages.length,
+        };
+
+        res.status(200).json({ success: true, message: Msg.DASHBOARD_DATA_RETRIEVED, dashboard: data, });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 // Get All Users
 export const getUsers = async (req, res) => {
     try {
@@ -254,7 +275,6 @@ export const getUsers = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
-
 
 // Create User
 export const createNewUser = async (req, res) => {
@@ -297,7 +317,7 @@ export const createNewUser = async (req, res) => {
     }
 };
 
-
+//update user's details
 export const editUserProfile = async (req, res) => {
     const { id, name, country_code, phone_number } = req.body;
 
@@ -340,7 +360,41 @@ export const editUserProfile = async (req, res) => {
     }
 };
 
-//getAllDrivers
+//delete user
+export const deleteUserProfile = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "User's ID is required" });
+        }
+
+        const user = await getUserById(id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+
+        if (user.profile_image) {
+            const oldImagePath = path.resolve("public", "uploads", "profile_images", user.profile_image);
+
+            if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
+                fs.unlinkSync(oldImagePath);
+            }
+        }
+
+        const result = await deleteUser(id);
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: Msg.USER_DELETED })
+        }
+    } catch (err) {
+        console.error("Unexpected error:", err);
+        return res.status(500).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
+    }
+}
+
+//get All Drivers
 export const getDrivers = async (req, res) => {
     try {
         const drivers = await getAllDrivers();
@@ -393,6 +447,7 @@ export const createNewDriver = async (req, res) => {
     }
 }
 
+//update driver's details
 export const editDriverProfile = async (req, res) => {
     const { id, name, country_code, phone_number } = req.body;
 
@@ -432,5 +487,237 @@ export const editDriverProfile = async (req, res) => {
 
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+//delete driver
+export const deleteDriverProfile = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Driver's ID is required" });
+        }
+
+        const driver = await getDriverById(id);
+
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.DRIVER_NOT_FOUND });
+        }
+
+        if (driver.profile_image) {
+            const oldImagePath = path.resolve("public", "uploads", "profile_images", driver.profile_image);
+
+            if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
+                fs.unlinkSync(oldImagePath);
+            }
+        }
+
+        const result = await deleteDriver(id);
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: Msg.DRIVER_DELETED })
+        }
+    } catch (err) {
+        console.error("Unexpected error:", err);
+        return res.status(500).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
+    }
+}
+
+// change user status
+export const changeUserStatus = async (req, res) => {
+    const { error } = changeStatusSchema.validate(req.body);
+    if (error) {
+        return res.status(403).json({ success: false, message: error.details[0].message });
+    }
+
+    const { status, id } = req.body;
+
+    try {
+        const user = await getUserById(id);
+        if (!user) {
+            return res.status(400).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+
+        await updateUserStatus(id, status);
+
+        return res.status(200).json({ success: true, message: Msg.STATUS_CHANGED });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR });
+    }
+};
+
+// change driver status
+export const changeDriverStatus = async (req, res) => {
+    const { error } = changeStatusSchema.validate(req.body);
+    if (error) {
+        return res.status(403).json({ success: false, message: error.details[0].message });
+    }
+
+    const { status, id } = req.body;
+
+    try {
+        const driver = await getDriverById(id);
+        if (!driver) {
+            return res.status(400).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+
+        await updateDriverStatus(id, status);
+
+        return res.status(200).json({ success: true, message: Msg.STATUS_CHANGED });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR });
+    }
+};
+
+// create package
+export const createNewPackage = async (req, res) => {
+    const { error } = createPackageSchema.validate(req.body);
+
+    if (error) {
+        return res.status(403).json({ success: false, message: error.details[0].message });
+    }
+
+    const {
+        package_name,
+        length,
+        width,
+        height,
+        weight,
+        base_fare,
+        per_minute_fare,
+        per_kilometer_fare,
+        cancellation_fee,
+        description,
+    } = req.body;
+
+    try {
+
+        const packageImage = req.files?.image?.[0].filename || "";
+
+        const packageData = {
+            package_name,
+            length,
+            width,
+            height,
+            weight,
+            base_fare,
+            per_minute_fare,
+            per_kilometer_fare,
+            cancellation_fee,
+            description,
+            image: packageImage,
+        };
+        const result = await createPackage(packageData);
+        if (result.insertId) {
+            return res.status(200).json({
+                success: true,
+                message: Msg.PACKAGE_CREATED
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: Msg.SOMETHING_WENT_WRONG
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// update package details
+export const editPackage = async (req, res) => {
+    const { error } = updatePackageSchema.validate(req.body);
+
+    if (error) {
+        return res.status(403).json({ success: false, message: error.details[0].message });
+    }
+
+    const {
+        id,
+        package_name,
+        length,
+        width,
+        height,
+        weight,
+        base_fare,
+        per_minute_fare,
+        per_kilometer_fare,
+        cancellation_fee,
+        description,
+    } = req.body;
+
+    try {
+        const existingPackage = await getPackageById(id);
+
+        if (!existingPackage) {
+            return res.status(400).json({ success: true, message: Msg.PACKAGE_NOT_FOUND });
+        }
+
+        let packageData = {
+            package_name: package_name || existingPackage.package_name,
+            length: length || existingPackage.length,
+            width: width || existingPackage.width,
+            height: height || existingPackage.height,
+            weight: weight || existingPackage.weight,
+            base_fare: base_fare || existingPackage.base_fare,
+            per_kilometer_fare: per_kilometer_fare || existingPackage.per_kilometer_fare,
+            per_minute_fare: per_minute_fare || existingPackage.per_minute_fare,
+            cancellation_fee: cancellation_fee || existingPackage.cancellation_fee,
+            description: description || existingPackage.description,
+            image: existingPackage.image,
+        };
+
+        const uploadedImage = req.files?.image?.[0]?.filename;
+        if (uploadedImage) {
+            if (existingPackage.image) {
+                const oldImagePath = path.resolve("public", "uploads", "packages", existingPackage.image);
+
+                if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+
+            packageData.image = uploadedImage;
+        }
+
+        await updatePackage(id, packageData);
+        return res.status(200).json({ success: true, message: Msg.PROFILE_UPDATED });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// delete package
+export const deletePackage = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Package's ID is required" });
+        }
+
+        const existingPackage = await getPackageById(id);
+
+        if (!existingPackage) {
+            return res.status(404).json({ success: false, message: Msg.PACKAGE_NOT_FOUND });
+        }
+
+        if (existingPackage.image) {
+            const oldImagePath = path.resolve("public", "uploads", "packages", existingPackage.image);
+
+            if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
+                fs.unlinkSync(oldImagePath);
+            }
+        }
+
+        const result = await deletePackageData(id);
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: Msg.PACKAGE_DELETED })
+        }
+    } catch (err) {
+        console.error("Unexpected error:", err);
+        return res.status(500).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
     }
 };

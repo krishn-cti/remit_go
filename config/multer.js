@@ -7,6 +7,7 @@ const uploadDirs = {
     profile: "public/uploads/profile_images/",
     dl: "public/uploads/dl_images/",
     rc: "public/uploads/rc_images/",
+    packageImage: "public/uploads/packages/",
 };
 
 Object.values(uploadDirs).forEach((dir) => {
@@ -21,6 +22,7 @@ const storage = multer.diskStorage({
         if (file.fieldname === "profile_image") cb(null, uploadDirs.profile);
         else if (file.fieldname === "dl_image") cb(null, uploadDirs.dl);
         else if (file.fieldname === "rc_image") cb(null, uploadDirs.rc);
+        else if (file.fieldname === "image") cb(null, uploadDirs.packageImage);
         else cb(new Error("Unexpected field"), false);
     },
     filename: (req, file, cb) => {
@@ -36,4 +38,5 @@ export const upload = multer({
     { name: "profile_image", maxCount: 1 },
     { name: "dl_image", maxCount: 1 },
     { name: "rc_image", maxCount: 1 },
+    { name: "image", maxCount: 1 },
 ]);

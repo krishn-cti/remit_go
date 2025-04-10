@@ -26,7 +26,7 @@ export const updatePassword = (newPassword, show_password, id) => {
             [newPassword, show_password, id],
             (err, result) => {
                 if (err) return reject(err);
-                resolve(result); 
+                resolve(result);
             }
         );
     });
@@ -49,7 +49,7 @@ export const fetchAminPassword = (id) => {
         db.query("SELECT password FROM admins WHERE id = ?", [id], (err, result) => {
             if (err) return reject(err);
             if (result.length === 0) return resolve(null);
-            resolve(result[0]); 
+            resolve(result[0]);
         });
     });
 };
@@ -74,11 +74,47 @@ export const updateUser = (id, userData) => {
     });
 };
 
-export const getAllDrivers = () =>{
-    return new Promise((resolve,reject) =>{
-        db.query("SELECT * FROM drivers",(err,result)=>{
-            if(err) return reject (err);
-            resolve (result);
+export const deleteUser = (id) => {
+    return new Promise((resolve, reject) => {
+        db.query("DELETE FROM users WHERE id=?", [id], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
         })
     })
 }
+
+export const getAllDrivers = () => {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT * FROM drivers", (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+}
+
+export const deleteDriver = (id) => {
+    return new Promise((resolve, reject) => {
+        db.query("DELETE FROM drivers WHERE id=?", [id], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        })
+    })
+}
+
+export const updateUserStatus = async (userId, status) => {
+    return new Promise((resolve, reject) => {
+        db.query('UPDATE users SET status = ? WHERE id = ?', [status, userId], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    })
+};
+
+export const updateDriverStatus = async (driverId, status) => {
+    return new Promise((resolve, reject) => {
+        db.query('UPDATE drivers SET status = ? WHERE id = ?', [status, driverId], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    })
+};

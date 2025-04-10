@@ -19,7 +19,7 @@ router.post("/forgot-password", forgotPassword);
 router.get("/reset-password/:token", loadResetPasswordForm)
 router.post("/reset-password", resetPassword);
 
-router.get("/get-all-packages", auth, getAllPackages);
+router.get("/get-packages", auth, getAllPackages);
 router.post("/send-package", auth, sendPackage);
 
 router.get("/get-pickup-addresses", auth, getPickupAddresses);

@@ -37,6 +37,7 @@ export const getAllPackages = async (req, res) => {
     }
 };
 
+//  send package to driver
 export const sendPackage = async (req, res) => {
     try {
         const { error } = sendPackageSchema.validate(req.body);
@@ -79,3 +80,5 @@ export const sendPackage = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+

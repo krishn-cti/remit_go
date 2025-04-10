@@ -130,3 +130,99 @@ export const deletePickupAndDropupSchema = Joi.object({
         'number.base': 'ID must be a number'
     })
 });
+
+export const changeStatusSchema = Joi.object({
+    id: Joi.number().required().messages({
+        'any.required': 'ID is required',
+        'number.base': 'ID must be a number'
+    }),
+    status: Joi.number().valid(0, 1).required().messages({
+        "any.required": "Status is required",
+        "any.only": "Status must be 0 or 1"
+    })
+});
+
+export const createPackageSchema = Joi.object({
+    package_name: Joi.string().required().messages({
+        "any.required": "Package name is required",
+        "string.empty": "Package name cannot be empty"
+    }),
+    length: Joi.number().required().messages({
+        "any.required": "Length is required",
+        "number.base": "Length must be a number"
+    }),
+    width: Joi.number().required().messages({
+        "any.required": "Width is required",
+        "number.base": "Width must be a number"
+    }),
+    height: Joi.number().optional().messages({
+        "number.base": "Width must be a number"
+    }),
+    weight: Joi.number().required().messages({
+        "any.required": "Weight is required",
+        "number.base": "Weight must be a number"
+    }),
+    base_fare: Joi.number().required().messages({
+        "any.required": "Base fare is required",
+        "number.base": "Base fare must be a number"
+    }),
+    per_minute_fare: Joi.number().required().messages({
+        "any.required": "Per minute fare is required",
+        "number.base": "Per minute fare must be a number"
+    }),
+    per_kilometer_fare: Joi.number().required().messages({
+        "any.required": "Per kilometer fare is required",
+        "number.base": "Per kilometer fare must be a number"
+    }),
+    cancellation_fee: Joi.number().required().messages({
+        "any.required": "Cancellation fee is required",
+        "number.base": "Cancellation fee must be a number"
+    }),
+    description: Joi.string().required().messages({
+        "any.required": "Description is required",
+        "string.empty": "Description cannot be empty"
+    }),
+    status: Joi.number().valid(0, 1).optional().messages({
+        "any.only": "Status must be 0 or 1"
+    })
+});
+
+export const updatePackageSchema = Joi.object({
+    id: Joi.number().required().messages({
+        "any.required": "ID is required",
+        "number.base": "ID must be a number"
+    }),
+    package_name: Joi.string().messages({
+        "string.empty": "Package name cannot be empty"
+    }),
+    length: Joi.number().messages({
+        "number.base": "Length must be a number"
+    }),
+    width: Joi.number().messages({
+        "number.base": "Width must be a number"
+    }),
+    height: Joi.number().messages({
+        "number.base": "Height must be a number"
+    }),
+    weight: Joi.number().messages({
+        "number.base": "Weight must be a number"
+    }),
+    base_fare: Joi.number().messages({
+        "number.base": "Base fare must be a number"
+    }),
+    per_minute_fare: Joi.number().messages({
+        "number.base": "Per minute fare must be a number"
+    }),
+    per_kilometer_fare: Joi.number().messages({
+        "number.base": "Per kilometer fare must be a number"
+    }),
+    cancellation_fee: Joi.number().messages({
+        "number.base": "Cancellation fee must be a number"
+    }),
+    description: Joi.string().messages({
+        "string.empty": "Description cannot be empty"
+    }),
+    status: Joi.number().valid(0, 1).messages({
+        "any.only": "Status must be 0 or 1"
+    })
+});

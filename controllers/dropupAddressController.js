@@ -72,7 +72,7 @@ export const createDropupAddress = async (req, res) => {
         const result = await createUserDropupAddress(dropupAddressData);
 
         if (result?.insertId) {
-            return res.status(201).json({ success: true, message: Msg.DROPUP_ADDRESS_CREATED });
+            return res.status(201).json({ success: true, message: Msg.DROPOFF_ADDRESS_CREATED });
         } else {
             return res.status(500).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
         }
@@ -107,7 +107,7 @@ export const updateDropupAddress = async (req, res) => {
 
         const dropupAddress = await getUserDropupAddressById(id);
         if (!dropupAddress) {
-            return res.status(404).json({ success: false, message: Msg.DROPUP_ADDRESS_NOT_FOUND });
+            return res.status(404).json({ success: false, message: Msg.DROPOFF_ADDRESS_NOT_FOUND });
         }
 
         const dropupAddressData = {
@@ -127,7 +127,7 @@ export const updateDropupAddress = async (req, res) => {
         const result = await updateUserDropupAddress(id, dropupAddressData);
 
         if (result?.affectedRows > 0) {
-            return res.status(200).json({ success: true, message: Msg.DROPUP_ADDRESS_UPDATED });
+            return res.status(200).json({ success: true, message: Msg.DROPOFF_ADDRESS_UPDATED });
         } else {
             return res.status(500).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
         }
@@ -151,9 +151,9 @@ export const deleteDropupAddress = async (req, res) => {
         const result = await deleteUserDropupAddress(id, userId);
 
         if (result.affectedRows > 0) {
-            return res.status(200).json({ success: true, message: Msg.DROPUP_ADDRESS_DELETED });
+            return res.status(200).json({ success: true, message: Msg.DROPOFF_ADDRESS_DELETED });
         } else {
-            return res.status(404).json({ success: false, message: Msg.DROPUP_ADDRESS_NOT_FOUND });
+            return res.status(404).json({ success: false, message: Msg.DROPOFF_ADDRESS_NOT_FOUND });
         }
 
     } catch (error) {
