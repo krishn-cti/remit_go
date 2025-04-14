@@ -29,6 +29,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/get-dashboard", adminAuth, getDashboard);
 
+// routes for package CRUD 
 router.get("/get-packages", adminAuth, getAllPackages);
 router.post("/create-package", adminAuth, upload, createNewPackage);
 router.post("/update-package", adminAuth, upload, editPackage);

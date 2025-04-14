@@ -34,11 +34,12 @@ export const sendPackageSchema = Joi.object({
         .messages({ 'any.required': 'Payment method ID is required' }),
 
     status: Joi.number()
-        .valid(0, 1)
+        .valid(0, 1, 2)
         .required()
         .messages({
-            'any.required': 'Status is required',
-            'any.only': 'Status must be either 0 or 1'
+            "any.required": "Status is required",
+            "any.only": "Status must be either 0, 1, or 2",
+            "number.base": "Status must be a number"
         })
 }).custom((value, helpers) => {
     if (value.package_id.length !== value.package_qty.length) {

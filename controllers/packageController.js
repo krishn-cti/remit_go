@@ -1,4 +1,4 @@
-import { getPackages, sendPackageToDriver } from "../models/packageModel.js";
+import { findOrderByPackageNo, getPackages, getUsersPackageDetails, getUsersPackages, sendPackageToDriver } from "../models/packageModel.js";
 import dotenv from 'dotenv';
 import os from "os";
 import Msg from "../utils/message.js";
@@ -20,6 +20,24 @@ const getLocalIp = () => {
 
 let localIp = getLocalIp();
 let baseUrl = `http://${localIp}:${process.env.PORT}`;
+
+const generateUniqueId = async () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let packageNo;
+    let isUnique = false;
+
+    while (!isUnique) {
+        packageNo = Array.from({ length: 6 }, () => characters[Math.floor(Math.random() * characters.length)]).join("");
+
+        // Check if ID already exists in the database
+        const existingOrder = await findOrderByPackageNo(packageNo);
+        if (!existingOrder) {
+            isUnique = true;
+        }
+    }
+
+    return packageNo;
+};
 
 // Get All Packages
 export const getAllPackages = async (req, res) => {
@@ -57,6 +75,7 @@ export const sendPackage = async (req, res) => {
         } = req.body;
 
         const packageData = {
+            package_no: await generateUniqueId(),
             user_id,
             pickup_address_id,
             dropup_address_id,
@@ -81,4 +100,43 @@ export const sendPackage = async (req, res) => {
     }
 };
 
+// get user's packages
+export const getMyPackages = async (req, res) => {
+    const user_id = req.user.id;
+    try {
+        const packages = await getUsersPackages(user_id);
+
+        const UserPackages = packages.map(item => ({
+            ...item,
+            driver_profile_image: item.driver_profile_image ? `${baseUrl}/uploads/profile_images/${item.driver_profile_image}` : null,
+        }));
+
+        res.status(200).json({ success: true, message: Msg.DATA_RETRIEVED, packages: UserPackages });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+// get user's package details
+export const getMyPackageDetails = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    try {
+        const packageData = await getUsersPackageDetails(id, userId);
+
+        if (!packageData) {
+            return res.status(404).json({ success: false, message: Msg.PACKAGE_NOT_FOUND });
+        }
+
+        packageData.driver_profile_image = packageData.driver_profile_image
+            ? `${baseUrl}/uploads/profile_images/${packageData.driver_profile_image}`
+            : null;
+
+        res.status(200).json({ success: true, message: Msg.DATA_RETRIEVED, package: packageData });
+
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
 

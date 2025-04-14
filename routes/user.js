@@ -2,7 +2,7 @@ import express from "express";
 import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword } from "../controllers/userController.js";
 import { auth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/multer.js";
-import { getAllPackages, sendPackage } from "../controllers/packageController.js";
+import { getAllPackages, getMyPackageDetails, getMyPackages, sendPackage } from "../controllers/packageController.js";
 import { getPickupAddresses, createPickupAddress, updatePickupAddress, deletePickupAddress } from "../controllers/pickupAddressController.js";
 import { createDropupAddress, deleteDropupAddress, getDropupAddresses, updateDropupAddress } from "../controllers/dropupAddressController.js";
 import { getPaymentMethods } from "../controllers/paymentController.js";
@@ -21,6 +21,8 @@ router.post("/reset-password", resetPassword);
 
 router.get("/get-packages", auth, getAllPackages);
 router.post("/send-package", auth, sendPackage);
+router.get("/get-my-packages", auth, getMyPackages);
+router.get("/get-my-package-details/:id", auth, getMyPackageDetails);
 
 router.get("/get-pickup-addresses", auth, getPickupAddresses);
 router.post("/create-pickup-address", auth, createPickupAddress);
