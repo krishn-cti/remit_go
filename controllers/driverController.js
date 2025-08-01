@@ -1,4 +1,3 @@
-import db from '../config/db.js';
 import argon2 from 'argon2';
 import fs from 'fs';
 import os from 'os';
@@ -24,7 +23,8 @@ import {
     findDriverByUuid,
     deleteDriver
 } from "../models/driverModel.js";
-import { deleteDriverAccountSchema } from '../utils/validators/formValidation.validator.js';
+import { findUserByEmail } from '../models/userModel.js';
+import { findAdminByEmail } from '../models/adminModel.js';
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -68,7 +68,10 @@ export const signup = async (req, res) => {
 
     try {
         const existingDriver = await findDriverByEmail(email);
-        if (existingDriver) {
+        const existingUser = await findUserByEmail(email);
+        const existingAdmin = await findAdminByEmail(email);
+
+        if (existingDriver || existingUser || existingAdmin) {
             return res.status(400).json({ success: false, message: Msg.EMAIL_ALREADY_REGISTERED });
         }
 
@@ -410,14 +413,8 @@ export const changeDocumentRequest = async (req, res) => {
 // delete drivers account
 export const deleteDriverAccount = async (req, res) => {
     const { id } = req.user;
-    // const { id } = req.body;
-    
-    try {
-        // const { error } = deleteDriverAccountSchema.validate(req.body);
-        // if (error) {
-        //     return res.status(403).json({ success: false, message: error.details[0].message });
-        // }
 
+    try {
         const result = await deleteDriver(id);
 
         if (result.affectedRows > 0) {

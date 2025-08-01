@@ -1,4 +1,3 @@
-import db from '../config/db.js';
 import argon2 from 'argon2';
 import fs from 'fs';
 import os from 'os';
@@ -21,7 +20,8 @@ import {
     updatePassword,
     deleteUser
 } from "../models/userModel.js";
-import { deleteUserAccountSchema } from '../utils/validators/formValidation.validator.js';
+import { findDriverByEmail } from '../models/driverModel.js';
+import { findAdminByEmail } from '../models/adminModel.js';
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -46,12 +46,12 @@ export const signup = async (req, res) => {
     const { name, email, password, phone_number, country_code } = req.body;
 
     try {
+        const existingDriver = await findDriverByEmail(email);
         const existingUser = await findUserByEmail(email);
-        if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: Msg.EMAIL_ALREADY_REGISTERED
-            })
+        const existingAdmin = await findAdminByEmail(email);
+
+        if (existingDriver || existingUser || existingAdmin) {
+            return res.status(400).json({ success: false, message: Msg.EMAIL_ALREADY_REGISTERED });
         }
 
         const hashedPassword = await argon2.hash(password);
@@ -311,11 +311,6 @@ export const deleteUserAccount = async (req, res) => {
     const { id } = req.user;
 
     try {
-        // const { error } = deleteUserAccountSchema.validate(req.body);
-        // if (error) {
-        //     return res.status(403).json({ success: false, message: error.details[0].message });
-        // }
-
         const result = await deleteUser(id);
 
         if (result.affectedRows > 0) {
