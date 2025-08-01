@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword } from "../controllers/userController.js";
+import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, deleteUserAccount } from "../controllers/userController.js";
 import { auth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/multer.js";
 import { getAllPackages, getMyPackageDetails, getMyPackages, sendPackage } from "../controllers/packageController.js";
@@ -35,4 +35,5 @@ router.put("/update-dropup-address", auth, updateDropupAddress);
 router.delete("/delete-dropup-address", auth, deleteDropupAddress);
 
 router.get("/get-payment-methods", auth, getPaymentMethods);
+router.delete("/delete-user-account", auth, deleteUserAccount);
 export default router;

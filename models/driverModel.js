@@ -107,3 +107,13 @@ export const createChangeRequest = (driverRequestData) => {
         });
     });
 };
+
+
+export const deleteDriver = (driver_id) => {
+    return new Promise((resolve, reject) => {
+        db.query("DELETE FROM drivers WHERE id = ?", [driver_id], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+}

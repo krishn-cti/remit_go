@@ -132,6 +132,18 @@ export const deletePickupAndDropupSchema = Joi.object({
     })
 });
 
+export const deleteUserAccountSchema = Joi.object({
+    id: Joi.number().required().messages({
+        'any.required': 'ID is required'
+    })
+});
+
+export const deleteDriverAccountSchema = Joi.object({
+    id: Joi.number().required().messages({
+        'any.required': 'ID is required'
+    })
+});
+
 export const changeStatusSchema = Joi.object({
     id: Joi.number().required().messages({
         'any.required': 'ID is required',

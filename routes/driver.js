@@ -1,6 +1,6 @@
 
 import express from "express";
-import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, changeDocumentRequest } from "../controllers/driverController.js";
+import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, changeDocumentRequest, deleteDriverAccount } from "../controllers/driverController.js";
 import { driverAuth } from "../middleware/driverMiddleware.js";
 import { upload } from "../config/multer.js";
 
@@ -16,4 +16,5 @@ router.post("/forgot-password", forgotPassword);
 router.get("/reset-password/:token", loadResetPasswordForm)
 router.post("/reset-password", resetPassword);
 router.post("/change-document-request", driverAuth, changeDocumentRequest);
+router.delete("/delete-driver-account", driverAuth, deleteDriverAccount);
 export default router;

@@ -21,8 +21,10 @@ import {
     fetchDriverPassword,
     updatePassword,
     createChangeRequest,
-    findDriverByUuid
+    findDriverByUuid,
+    deleteDriver
 } from "../models/driverModel.js";
+import { deleteDriverAccountSchema } from '../utils/validators/formValidation.validator.js';
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -404,3 +406,27 @@ export const changeDocumentRequest = async (req, res) => {
         res.status(500).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR, error: error.message });
     }
 }
+
+// delete drivers account
+export const deleteDriverAccount = async (req, res) => {
+    const { id } = req.user;
+    // const { id } = req.body;
+    
+    try {
+        // const { error } = deleteDriverAccountSchema.validate(req.body);
+        // if (error) {
+        //     return res.status(403).json({ success: false, message: error.details[0].message });
+        // }
+
+        const result = await deleteDriver(id);
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: Msg.DRIVER_ACCOUNT_DELETED });
+        } else {
+            return res.status(404).json({ success: false, message: Msg.DRIVER_NOT_FOUND });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

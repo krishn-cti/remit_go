@@ -18,8 +18,10 @@ import {
     getUserById,
     updateUserProfile,
     fetchUserPassword,
-    updatePassword
+    updatePassword,
+    deleteUser
 } from "../models/userModel.js";
+import { deleteUserAccountSchema } from '../utils/validators/formValidation.validator.js';
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -301,5 +303,28 @@ export const resetPassword = async (req, res) => {
         return res.json({ success: true, message: Msg.PROFILE_UPDATED, redirect: "/success" });
     } catch (error) {
         res.status(400).json({ success: false, message: Msg.INTERNAL_SERVER_ERROR + error.message });
+    }
+};
+
+// delete users account
+export const deleteUserAccount = async (req, res) => {
+    const { id } = req.user;
+
+    try {
+        // const { error } = deleteUserAccountSchema.validate(req.body);
+        // if (error) {
+        //     return res.status(403).json({ success: false, message: error.details[0].message });
+        // }
+
+        const result = await deleteUser(id);
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: Msg.USER_ACCOUNT_DELETED });
+        } else {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };

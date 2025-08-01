@@ -89,3 +89,12 @@ export const updatePassword = (newPassword, show_password, id) => {
         );
     });
 };
+
+export const deleteUser = (user_id) => {
+    return new Promise((resolve, reject) => {
+        db.query("DELETE FROM users WHERE id = ?", [user_id], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+}

@@ -27,9 +27,13 @@ export const getUsersPackages = (userId) => {
                 d.name AS driver_name,
                 d.email AS driver_email,
                 d.phone_number AS driver_phone,
-                d.profile_image AS driver_profile_image
+                d.profile_image AS driver_profile_image,
+                pda.location AS pickup_address,
+                uda.location AS dropup_address
             FROM user_packages up
             LEFT JOIN drivers d ON up.driver_id = d.id
+            LEFT JOIN user_pickup_addresses pda ON up.pickup_address_id = pda.id
+            LEFT JOIN user_dropup_addresses uda ON up.dropup_address_id = uda.id
             WHERE up.user_id = ?
         `;
 

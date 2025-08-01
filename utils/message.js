@@ -40,6 +40,8 @@ const messages = {
     DROPOFF_ADDRESS_DELETED: "Dropoff address deleted successfully.",
     DASHBOARD_DATA_RETRIEVED: "Dashboard data retrieved successfully.",
     STATUS_CHANGED: "Status changed successfully",
+    USER_ACCOUNT_DELETED: "User account deleted successfully.",
+    DRIVER_ACCOUNT_DELETED: "Driver account deleted successfully.",
 };
 
 export default messages
