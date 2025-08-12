@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 export const getUserPickupAddressByUser = (userId) => {
     return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM user_pickup_addresses WHERE user_id = ? ", [userId], (err, results) => {
+        db.query("SELECT * FROM user_pickup_addresses WHERE user_id = ? ORDER BY id DESC ", [userId], (err, results) => {
             if (err) return reject(err);
             resolve(results);
         });
@@ -11,7 +11,7 @@ export const getUserPickupAddressByUser = (userId) => {
 
 export const getUserPickupAddressById = (pickupId) => {
     return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM user_pickup_addresses WHERE id = ? ", [pickupId], (err, results) => {
+        db.query("SELECT * FROM user_pickup_addresses WHERE id = ? ORDER BY id DESC ", [pickupId], (err, results) => {
             if (err) return reject(err);
             resolve(results);
         });

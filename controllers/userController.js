@@ -311,6 +311,23 @@ export const deleteUserAccount = async (req, res) => {
     const { id } = req.user;
 
     try {
+        const user = await getUserById(id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: Msg.USER_NOT_FOUND });
+        }
+
+        const deleteImageIfExists = (subfolder, filename) => {
+            if (filename) {
+                const fullPath = path.join('public', 'uploads', subfolder, filename);
+                if (fs.existsSync(fullPath)) {
+                    fs.unlinkSync(fullPath);
+                }
+            }
+        };
+
+        deleteImageIfExists('profile_images', user.profile_image);
+
         const result = await deleteUser(id);
 
         if (result.affectedRows > 0) {

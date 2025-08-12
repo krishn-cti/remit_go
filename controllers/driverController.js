@@ -415,6 +415,25 @@ export const deleteDriverAccount = async (req, res) => {
     const { id } = req.user;
 
     try {
+        const driver = await getDriverById(id);
+
+        if (!driver) {
+            return res.status(404).json({ success: false, message: Msg.DRIVER_NOT_FOUND });
+        }
+
+        const deleteImageIfExists = (subfolder, filename) => {
+            if (filename) {
+                const fullPath = path.join('public', 'uploads', subfolder, filename);
+                if (fs.existsSync(fullPath)) {
+                    fs.unlinkSync(fullPath);
+                }
+            }
+        };
+
+        deleteImageIfExists('profile_images', driver.profile_image);
+        deleteImageIfExists('dl_images', driver.dl_image);
+        deleteImageIfExists('rc_images', driver.rc_image);
+
         const result = await deleteDriver(id);
 
         if (result.affectedRows > 0) {

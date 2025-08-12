@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 export const getPackages = () => {
     return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM packages", (err, results) => {
+        db.query("SELECT * FROM packages ORDER BY id DESC", (err, results) => {
             if (err) return reject(err);
             resolve(results);
         });
@@ -35,6 +35,7 @@ export const getUsersPackages = (userId) => {
             LEFT JOIN user_pickup_addresses pda ON up.pickup_address_id = pda.id
             LEFT JOIN user_dropup_addresses uda ON up.dropup_address_id = uda.id
             WHERE up.user_id = ?
+            ORDER BY up.id DESC
         `;
 
         db.query(query, [userId], (err, results) => {
