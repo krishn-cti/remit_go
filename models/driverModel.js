@@ -186,3 +186,12 @@ export const updateNotificationDetails = (packageNo, notificationData) => {
         });
     });
 };
+
+export const updateDriverLogin = (email, updateData) => {
+    return new Promise((resolve, reject) => {
+        db.query("UPDATE drivers SET ? WHERE email = ?", [updateData, email], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+};

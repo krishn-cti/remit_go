@@ -1,11 +1,12 @@
 
 import express from "express";
-import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, changeDocumentRequest, deleteDriverAccount, updateToken, updateLocation, getDriverNotifications, acceptPackage, rejectPackage, completePackage, deleteSingleNotification, deleteAllNotification, getMyPackages } from "../controllers/driverController.js";
+import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, changeDocumentRequest, deleteDriverAccount, updateToken, updateLocation, getDriverNotifications, acceptPackage, rejectPackage, completePackage, deleteSingleNotification, deleteAllNotification, getMyPackages, googleLoginDriver } from "../controllers/driverController.js";
 import { driverAuth } from "../middleware/driverMiddleware.js";
 import { upload } from "../config/multer.js";
 
 const router = express.Router();
 
+router.post("/google-login", googleLoginDriver);
 router.post("/signup", upload, signup);
 router.get("/verify/:token", verifyEmail);
 router.post("/login", login);

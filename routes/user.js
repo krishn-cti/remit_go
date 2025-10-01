@@ -1,14 +1,15 @@
 import express from "express";
-import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, deleteUserAccount, createUserReport, getUserReports, updateToken, getUserNotifications, deleteSingleNotification, deleteAllNotification } from "../controllers/userController.js";
+import { signup, verifyEmail, login, getProfile, updateProfile, forgotPassword, changePassword, loadResetPasswordForm, resetPassword, deleteUserAccount, createUserReport, getUserReports, updateToken, getUserNotifications, deleteSingleNotification, deleteAllNotification, googleLoginUser } from "../controllers/userController.js";
 import { auth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/multer.js";
 import { getAllPackages, getMyPackageDetails, getMyPackages, sendPackage } from "../controllers/packageController.js";
 import { getPickupAddresses, createPickupAddress, updatePickupAddress, deletePickupAddress } from "../controllers/pickupAddressController.js";
 import { createDropupAddress, deleteDropupAddress, getDropupAddresses, updateDropupAddress } from "../controllers/dropupAddressController.js";
-import { getPaymentMethods } from "../controllers/paymentController.js";
+import { createPayment, getCards, getPaymentMethods, paymentHistory, saveCard, updateDefaultCard } from "../controllers/paymentController.js";
 
 const router = express.Router();
 
+router.post("/google-login", googleLoginUser);
 router.post("/signup", signup);
 router.get("/verify/:token", verifyEmail);
 router.post("/login", login);
@@ -44,4 +45,12 @@ router.get("/get-user-reports", auth, getUserReports);
 router.get("/get-all-notifications", auth, getUserNotifications);
 router.delete("/delete-single-notification", auth, deleteSingleNotification);
 router.delete("/delete-all-notifications", auth, deleteAllNotification);
+
+// router.post("/save-card", auth, saveCard);
+// router.get("/get-all-payments", auth, getAllPayments);
+// router.post("/save-card", saveCard);
+// router.get("/get-cards/:userId", getCards);
+// router.post("/set-default-card", updateDefaultCard);
+router.post("/create-payment", auth, createPayment);
+router.get("/payment-history/:userId", auth, paymentHistory);
 export default router;

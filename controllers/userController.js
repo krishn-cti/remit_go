@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { sendVerificationEmail } from "../config/mailer.js";
+import admin from "../config/firebase.js";
 import { generateToken } from "../utils/auth.js";
 import Msg from "../utils/message.js"
 import {
@@ -21,7 +22,8 @@ import {
     deleteUser,
     createReport,
     userReports,
-    userNotifications
+    userNotifications,
+    updateUserLogin
 } from "../models/userModel.js";
 import { findDriverByEmail } from '../models/driverModel.js';
 import { findAdminByEmail } from '../models/adminModel.js';
@@ -51,6 +53,44 @@ const getLocalIp = () => {
 
 let localIp = getLocalIp();
 let baseUrl = `http://${localIp}:${process.env.PORT}`;
+
+export const googleLoginUser = async (req, res) => {
+    try {
+        const { idToken, email, socialId, userName, fcmToken } = req.body;
+
+        if (!idToken) return res.status(400).json({ success: false, message: "Firebase ID token is required" });
+
+        // Verify Firebase ID token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+        if (decodedToken.uid !== socialId) return res.status(401).json({ success: false, message: "Token mismatch" });
+
+        // Check if user exists
+        let user = await findUserByEmail(email);
+
+        if (!user) {
+            const newUser = {
+                name: userName,
+                email,
+                social_id: socialId,
+                social_provider: "google",
+                fcm_token: fcmToken,
+                login_type: "social",
+            };
+            await createUser(newUser);
+            user = newUser;
+        } else {
+            await updateUserLogin(email, { fcm_token: fcmToken, login_type: "social" });
+        }
+
+        const token = jwt.sign({ email: user.email, id: user.id }, process.env.USER_JWT_SECRET, { expiresIn: "7d" });
+
+        res.json({ success: true, message: "Google login successful", token, user });
+    } catch (err) {
+        console.error("Google Login (User) Error:", err);
+        res.status(500).json({ success: false, message: "Google login failed" });
+    }
+};
 
 // Signup API
 export const signup = async (req, res) => {
@@ -455,7 +495,7 @@ export const getUserNotifications = async (req, res) => {
         }
 
         const result = await userNotifications(id);
-        
+
         const userTimezone = req.user?.timezone || "UTC";
         const formatted = result.map(row => ({
             ...row,

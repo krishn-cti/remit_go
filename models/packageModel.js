@@ -195,7 +195,7 @@ export const deleteNotification = (notification_id) => {
 
 export const deleteAllDriverNotification = (driver_id) => {
     return new Promise((resolve, reject) => {
-        db.query("DELETE FROM notifications WHERE is_receiver = 'driver' AND is_read = 1 AND send_to_id = ?", [driver_id], (err, result) => {
+        db.query("DELETE FROM notifications WHERE is_receiver = 'driver' AND notification_action IN (2, 3) AND send_to_id = ?", [driver_id], (err, result) => {
             if (err) return reject(err);
             resolve(result);
         });

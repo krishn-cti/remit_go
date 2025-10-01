@@ -42,7 +42,10 @@ export const sendPackageSchema = Joi.object({
             "number.base": "Status must be a number"
         })
 }).custom((value, helpers) => {
-    if (value.package_id.length !== value.package_qty.length) {
+    const ids = value.package_id.split(",");
+    const qtys = value.package_qty.split(",");
+
+    if (ids.length !== qtys.length) {
         return helpers.message("Package ID and Package quantity must have the same length");
     }
     return value;

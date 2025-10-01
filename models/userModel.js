@@ -129,3 +129,12 @@ export const userNotifications = (userId) => {
         );
     });
 };
+
+export const updateUserLogin = (email, updateData) => {
+    return new Promise((resolve, reject) => {
+        db.query("UPDATE users SET ? WHERE email = ?", [updateData, email], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+};

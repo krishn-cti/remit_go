@@ -5,6 +5,7 @@ import path from 'path';
 import nodemailer from "nodemailer";
 import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
+import admin from "../config/firebase.js";
 import dotenv from 'dotenv';
 import { sendDriverVerificationEmail } from "../config/mailer.js";
 import { generateToken } from "../utils/driverAuth.js";
@@ -73,6 +74,56 @@ const generateUniqueId = async () => {
     }
 
     return id;
+};
+
+export const googleLoginDriver = async (req, res) => {
+    try {
+        const { idToken, email, socialId, userName, fcmToken } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({ success: false, message: "Firebase ID token is required" });
+        }
+
+        // Verify Firebase ID token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+        if (decodedToken.uid !== socialId) {
+            return res.status(401).json({ success: false, message: "Token mismatch" });
+        }
+
+        // Check if driver exists
+        let driver = await findDriverByEmail(email);
+
+        if (!driver) {
+            // Create new driver record
+            const newDriver = {
+                name: userName,
+                email,
+                social_id: socialId,
+                social_provider: "google",
+                fcm_token: fcmToken,
+                login_type: "social",
+            };
+            await createDriver(newDriver);
+            driver = newDriver;
+        } else {
+            // Update fcmToken on login
+            await updateDriverLogin(email, { fcm_token: fcmToken, login_type: "social" });
+        }
+
+        // Generate Driver JWT
+        const token = jwt.sign({ email: driver.email, id: driver.id }, process.env.DRIVER_JWT_SECRET, { expiresIn: "7d" });
+
+        res.json({
+            success: true,
+            message: "Google login successful (Driver)",
+            token,
+            driver,
+        });
+    } catch (err) {
+        console.error("Google Login (Driver) Error:", err);
+        res.status(500).json({ success: false, message: "Google login failed" });
+    }
 };
 
 // Signup API
@@ -532,7 +583,7 @@ export const getDriverNotifications = async (req, res) => {
         }
 
         const result = await driverNotifications(id);
-        
+
         const userTimezone = req.user?.timezone || "UTC";
         const formatted = result.map(row => ({
             ...row,
@@ -577,7 +628,7 @@ export const acceptPackage = async (req, res) => {
         await updatePackageDetails(packageId, packageData);
 
         const notificationData = {
-            is_read: 2
+            notification_action: 1
         };
         await updateNotificationDetails(package_no, notificationData);
 
@@ -648,7 +699,7 @@ export const rejectPackage = async (req, res) => {
         await updatePackageDetails(packageId, packageData);
 
         const notificationData = {
-            is_read: 1
+            notification_action: 3
         };
         await updateNotificationDetails(package_no, notificationData);
 
@@ -752,7 +803,7 @@ export const completePackage = async (req, res) => {
         await updatePackageDetails(packageId, packageData);
 
         const notificationData = {
-            is_read: 1
+            notification_action: 2
         };
         await updateNotificationDetails(package_no, notificationData);
 
