@@ -110,7 +110,7 @@ export const createReport = (reportData) => {
 
 export const userReports = (id) => {
     return new Promise((resolve, reject) => {
-        db.query("SELECT * FROM user_reports WHERE user_id = ?", [id], (err, result) => {
+        db.query("SELECT * FROM user_reports WHERE user_id = ? ORDER BY id DESC", [id], (err, result) => {
             if (err) reject(err);
             resolve(result);
         });

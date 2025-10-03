@@ -191,38 +191,28 @@ export const updateDefaultCard = async (req, res) => {
 // ─────────── Make Payment ───────────
 export const createPayment = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { amount, currency } = req.body;
+        const { user_id, amount, currency } = req.body;
+        const stripeAmount = Math.round(parseFloat(amount) * 100);
 
-        const user = await getUserById(userId);
-        if (!user || !user.stripe_customer_id) {
-            return res.status(400).json({ success: false, message: "Stripe customer not found" });
-        }
-
-        // Correct configuration for PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // in cents
-            currency: currency || "usd",
-            customer: user.stripe_customer_id,
-            automatic_payment_methods: {
-                enabled: true,
-                allow_redirects: "never", // disables redirect-based methods
-            },
+            amount: stripeAmount,
+            currency,
+            payment_method_types: ["card"]
         });
 
-        // Save history
         await savePaymentHistory({
-            user_id: userId,
+            user_id,
             amount,
-            currency: currency || "usd",
+            currency,
             stripe_payment_id: paymentIntent.id,
+            payment_method_type: paymentIntent.payment_method_types[0],
             status: paymentIntent.status,
         });
 
-        res.json({ success: true, payment: paymentIntent });
+        res.json({ success: true, paymentIntent });
     } catch (err) {
-        console.error("Payment Error:", err);
-        res.status(500).json({ success: false, message: err.message });
+        console.error("Payment error:", err);
+        res.status(400).json({ success: false, message: err.message });
     }
 };
 

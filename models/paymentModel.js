@@ -8,7 +8,7 @@ export const updateStripeCustomerId = async (userId, customerId) => {
             [customerId, userId],
             (err, result) => {
                 if (err) return reject(err);
-                resolve(result); 
+                resolve(result);
             }
         );
     });
@@ -40,7 +40,7 @@ export const resetDefaultCard = async (userId) => {
             [userId],
             (err, result) => {
                 if (err) return reject(err);
-                resolve(result); 
+                resolve(result);
             }
         );
     });
@@ -54,20 +54,25 @@ export const setDefaultCard = async (cardId, userId) => {
 export const savePaymentHistory = async (data) => {
     const sql = `
         INSERT INTO payment_history
-        (user_id, amount, currency, stripe_payment_id, status)
-        VALUES (?, ?, ?, ?, ?)
+        (user_id, amount, currency, stripe_payment_id, payment_method_type, status)
+        VALUES (?, ?, ?, ?, ?, ?)
     `;
     return new Promise((resolve, reject) => {
-        db.query(sql, [
-            data.user_id,
-            data.amount,
-            data.currency,
-            data.stripe_payment_id,
-            data.status,
-        ], (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-        });
+        db.query(
+            sql,
+            [
+                data.user_id,
+                data.amount, // should be decimal(10,2), keep it like 208.00 (not in cents)
+                data.currency,
+                data.stripe_payment_id,
+                data.payment_method_type,
+                data.status,
+            ],
+            (err, result) => {
+                if (err) return reject(err);
+                resolve(result);
+            }
+        );
     });
 };
 
