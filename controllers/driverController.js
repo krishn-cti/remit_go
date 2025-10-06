@@ -86,9 +86,26 @@ export const googleLoginDriver = async (req, res) => {
 
         // Verify Firebase ID token
         const decodedToken = await admin.auth().verifyIdToken(idToken);
-
         if (decodedToken.uid !== socialId) {
             return res.status(401).json({ success: false, message: "Token mismatch" });
+        }
+
+        // ✅ Check if user already registered as another role
+        const existingUser = await findUserByEmail(email);
+        const existingAdmin = await findAdminByEmail(email);
+
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: "You are already registered as a user.",
+            });
+        }
+
+        if (existingAdmin) {
+            return res.status(400).json({
+                success: false,
+                message: "You are already registered as an admin.",
+            });
         }
 
         // Check if driver exists
@@ -104,19 +121,29 @@ export const googleLoginDriver = async (req, res) => {
                 fcm_token: fcmToken,
                 login_type: "social",
             };
-            await createDriver(newDriver);
+
+            const response = await createDriver(newDriver);
+
+            if (response.insertId) {
+                newDriver.id = response.insertId; // attach new ID
+            }
+
             driver = newDriver;
         } else {
-            // Update fcmToken on login
+            // Update FCM token on login
             await updateDriverLogin(email, { fcm_token: fcmToken, login_type: "social" });
         }
 
-        // Generate Driver JWT
-        const token = jwt.sign({ email: driver.email, id: driver.id }, process.env.DRIVER_JWT_SECRET, { expiresIn: "7d" });
+        // Generate JWT token
+        const token = jwt.sign(
+            { email: driver.email, id: driver.id },
+            process.env.DRIVER_JWT_SECRET,
+            { expiresIn: "7d" }
+        );
 
         res.json({
             success: true,
-            message: "Google login successful (Driver)",
+            message: "Google login successful",
             token,
             driver,
         });
