@@ -36,7 +36,7 @@ export const getUsersPackages = (userId) => {
             LEFT JOIN user_pickup_addresses pda ON up.pickup_address_id = pda.id
             LEFT JOIN user_dropup_addresses uda ON up.dropup_address_id = uda.id
             WHERE up.user_id = ?
-            ORDER BY up.id DESC
+            ORDER BY up.updated_at DESC
         `;
 
         db.query(query, [userId], (err, results) => {
@@ -63,7 +63,7 @@ export const getDriversPackages = (driverId) => {
             LEFT JOIN user_pickup_addresses pda ON up.pickup_address_id = pda.id
             LEFT JOIN user_dropup_addresses uda ON up.dropup_address_id = uda.id
             WHERE up.driver_id = ?
-            ORDER BY up.id DESC
+            ORDER BY up.updated_at DESC
         `;
 
         db.query(query, [driverId], (err, results) => {
@@ -162,8 +162,8 @@ export const saveNotification = async ({
     return new Promise((resolve, reject) => {
         const query = `
         INSERT INTO notifications 
-        (send_from_id, send_to_id, package_no, title, body, notification_type, is_sender, is_receiver, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        (send_from_id, send_to_id, package_no, title, body, notification_type, is_sender, is_receiver)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [

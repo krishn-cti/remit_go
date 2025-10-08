@@ -25,7 +25,8 @@ import {
     deleteDriver,
     driverNotifications,
     getDriversByCoordinates,
-    updateNotificationDetails
+    updateNotificationDetails,
+    updateDriverLogin
 } from "../models/driverModel.js";
 import { findUserByEmail, getUserById } from '../models/userModel.js';
 import { findAdminByEmail } from '../models/adminModel.js';
@@ -114,12 +115,14 @@ export const googleLoginDriver = async (req, res) => {
         if (!driver) {
             // Create new driver record
             const newDriver = {
+                driver_uuid: await generateUniqueId(),
                 name: userName,
                 email,
                 social_id: socialId,
                 social_provider: "google",
                 fcm_token: fcmToken,
                 login_type: "social",
+                email_verified_at: new Date()
             };
 
             const response = await createDriver(newDriver);
@@ -650,6 +653,7 @@ export const acceptPackage = async (req, res) => {
         // Update package with driver assignment + status
         const packageData = {
             driver_id: driverId,
+            pickedup_at: new Date(),
             status: 1 // accepted
         };
         await updatePackageDetails(packageId, packageData);
@@ -825,6 +829,7 @@ export const completePackage = async (req, res) => {
         // Update status (delivered)
         const packageData = {
             driver_id: driverId,
+            delivered_at: new Date(),
             status: 2
         };
         await updatePackageDetails(packageId, packageData);

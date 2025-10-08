@@ -5,7 +5,7 @@ import { upload } from "../config/multer.js";
 import { getAllPackages, getMyPackageDetails, getMyPackages, sendPackage } from "../controllers/packageController.js";
 import { getPickupAddresses, createPickupAddress, updatePickupAddress, deletePickupAddress } from "../controllers/pickupAddressController.js";
 import { createDropupAddress, deleteDropupAddress, getDropupAddresses, updateDropupAddress } from "../controllers/dropupAddressController.js";
-import { createPayment, getCards, getPaymentMethods, paymentHistory, saveCard, updateDefaultCard } from "../controllers/paymentController.js";
+import { createPayment, getPaymentMethods, paymentHistory } from "../controllers/paymentController.js";
 
 const router = express.Router();
 
@@ -48,7 +48,6 @@ router.delete("/delete-all-notifications", auth, deleteAllNotification);
 
 // router.post("/save-card", auth, saveCard);
 // router.get("/get-all-payments", auth, getAllPayments);
-// router.post("/save-card", saveCard);
 // router.get("/get-cards/:userId", getCards);
 // router.post("/set-default-card", updateDefaultCard);
 router.post("/create-payment", auth, createPayment);

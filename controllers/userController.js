@@ -516,7 +516,7 @@ export const getUserReports = async (req, res) => {
                 data: updatedResponse
             });
         } else {
-            res.status(404).json({ success: false, message: Msg.SOMETHING_WENT_WRONG });
+            res.status(404).json({ success: false, message: Msg.REPORT_NOT_FOUND });
         }
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

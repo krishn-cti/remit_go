@@ -167,12 +167,21 @@ export const deleteDriver = (driver_id) => {
 
 export const driverNotifications = (driverId) => {
     return new Promise((resolve, reject) => {
-        db.query(
-            "SELECT * FROM notifications WHERE is_receiver = 'driver' AND send_to_id = ? ORDER BY created_at DESC",
-            [driverId],
-            (err, result) => {
+        const query = `
+            SELECT 
+                n.*, 
+                up.id AS user_id,
+                up.pickedup_at,
+                up.delivered_at,
+                up.updated_at
+            FROM notifications n
+            LEFT JOIN user_packages up ON n.package_no = up.package_no
+            WHERE is_receiver = 'driver' AND send_to_id = ?
+            ORDER BY n.created_at DESC`;
+            // "SELECT * FROM notifications WHERE is_receiver = 'driver' AND send_to_id = ? ORDER BY created_at DESC",
+            db.query(query, [driverId], (err, results) => {
                 if (err) return reject(err);
-                resolve(result);
+                resolve(results);
             }
         );
     });

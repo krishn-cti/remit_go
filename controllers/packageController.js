@@ -87,7 +87,8 @@ export const sendPackage = async (req, res) => {
             package_qty,
             amount,
             payment_method_id,
-            status
+            status,
+            updated_at: new Date()
         };
 
 
