@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import jwt from 'jsonwebtoken';
 import nodemailer from "nodemailer";
 import fs from 'fs';
-import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllDrivers, deleteDriver, deleteUser, updateUserStatus, updateDriverStatus } from "../models/adminModel.js";
+import { findAdminByEmail, getAdminById, updatePassword, updateAdminProfile, fetchAminPassword, getAllUsers, getAllUsersBySearch, getAllDrivers, deleteDriver, deleteUser, updateUserStatus, updateDriverStatus } from "../models/adminModel.js";
 import { findUserByEmail, getUserById, createUser, updateUserProfile } from "../models/userModel.js";
 import { createDriver, findDriverByEmail, findDriverByUuid, getDriverById, updateDriverProfile } from "../models/driverModel.js"
 import { sendWelcomeEmail } from "../config/mailer.js";
@@ -48,7 +48,6 @@ const generateUniqueId = async () => {
             isUnique = true;
         }
     }
-
     return id;
 };
 
@@ -262,8 +261,9 @@ export const getDashboard = async (req, res) => {
 
 // Get All Users
 export const getUsers = async (req, res) => {
+    const { search } = req.query;
     try {
-        const users = await getAllUsers();
+        const users = await getAllUsersBySearch(search);
 
         const formattedUsers = users.map(user => ({
             ...user,
@@ -272,6 +272,8 @@ export const getUsers = async (req, res) => {
 
         res.status(200).json({ success: true, users: formattedUsers });
     } catch (error) {
+        console.log(error);
+
         res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -458,6 +460,7 @@ export const editDriverProfile = async (req, res) => {
     try {
         const driver = await getDriverById(id);
 
+
         if (!driver) {
             return res.status(404).json({ success: false, message: Msg.DRIVER_NOT_FOUND });
         }
@@ -470,6 +473,8 @@ export const editDriverProfile = async (req, res) => {
         };
 
         const uploadedImage = req.files?.profile_image?.[0]?.filename;
+        console.log('object====>', uploadedImage);
+
         if (uploadedImage) {
             if (driver.profile_image) {
                 const oldImagePath = path.resolve("public", "uploads", "profile_images", driver.profile_image);
@@ -478,7 +483,6 @@ export const editDriverProfile = async (req, res) => {
                     fs.unlinkSync(oldImagePath);
                 }
             }
-
             updateDriver.profile_image = uploadedImage;
         }
 

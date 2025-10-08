@@ -33,19 +33,19 @@ router.get("/get-dashboard", adminAuth, getDashboard);
 router.get("/get-packages", adminAuth, getAllPackages);
 router.post("/create-package", adminAuth, upload, createNewPackage);
 router.post("/update-package", adminAuth, upload, editPackage);
-router.delete("/delete-package", adminAuth, deletePackage);
+router.post("/delete-package", adminAuth, deletePackage);
 
 // routes for user CRUD 
 router.get("/get-users", adminAuth, getUsers);
 router.post("/create-user", adminAuth, upload, createNewUser);
 router.post("/update-user", adminAuth, upload, editUserProfile);
-router.delete("/delete-user", adminAuth, upload, deleteUserProfile);
+router.post("/delete-user", adminAuth, upload, deleteUserProfile);
 
 // routes for driver CRUD
 router.get("/get-drivers", adminAuth, getDrivers);
 router.post("/create-driver", adminAuth, upload, createNewDriver);
 router.post("/update-driver", adminAuth, upload, editDriverProfile);
-router.delete("/delete-driver", adminAuth, upload, deleteDriverProfile);
+router.post("/delete-driver", adminAuth, upload, deleteDriverProfile);
 
 router.post("/change-user-status", adminAuth, changeUserStatus);
 router.post("/change-driver-status", adminAuth, changeDriverStatus);
